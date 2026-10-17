@@ -1,0 +1,6 @@
+{
+  "name": "ATP MEDICAL - Gestión de Citas e Ingreso",
+  "description": "Sistema profesional de agendamiento clínico, admisión con triaje, directorio de expedientes y turnero digital para ATP MEDICAL.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
