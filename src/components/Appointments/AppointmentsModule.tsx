@@ -30,7 +30,10 @@ import {
   List,
   Sparkles,
   Users,
-  ShieldAlert
+  ShieldAlert,
+  CalendarRange,
+  RotateCcw,
+  Filter
 } from 'lucide-react';
 import { getTodayDateString } from '../../data/initialData';
 
@@ -258,7 +261,13 @@ export const AppointmentsModule: React.FC<AppointmentsModuleProps> = ({
   const [activeTab, setActiveTab] = useState<'agenda' | 'doctors-schedule' | 'weekly-grid'>('agenda');
 
   // Filters for Agenda view
-  const [selectedDateFilter, setSelectedDateFilter] = useState<'today' | 'tomorrow' | 'week' | 'all'>('today');
+  const [selectedDateFilter, setSelectedDateFilter] = useState<'today' | 'tomorrow' | 'week' | 'month' | 'range' | 'all'>('today');
+  const [rangeStartDate, setRangeStartDate] = useState(getTodayDateString());
+  const [rangeEndDate, setRangeEndDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 7);
+    return d.toISOString().split('T')[0];
+  });
   const [selectedSpecialty, setSelectedSpecialty] = useState<string>('all');
   const [selectedDoctor, setSelectedDoctor] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
@@ -299,6 +308,41 @@ export const AppointmentsModule: React.FC<AppointmentsModuleProps> = ({
     d.setDate(d.getDate() + 7);
     return d.toISOString().split('T')[0];
   }, []);
+
+  const monthStartStr = useMemo(() => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    return `${y}-${m}-01`;
+  }, []);
+
+  const monthEndStr = useMemo(() => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = d.getMonth() + 1;
+    const lastDay = new Date(y, m, 0).getDate();
+    return `${y}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+  }, []);
+
+  // Check if any non-default filter is applied
+  const isAnyFilterActive = useMemo(() => {
+    return selectedDateFilter !== 'today' ||
+      selectedSpecialty !== 'all' ||
+      selectedDoctor !== 'all' ||
+      selectedStatus !== 'all' ||
+      searchQuery.trim() !== '';
+  }, [selectedDateFilter, selectedSpecialty, selectedDoctor, selectedStatus, searchQuery]);
+
+  // Handler to reset all filters to default state
+  const handleResetFilters = () => {
+    setSelectedDateFilter('today');
+    setRangeStartDate(todayStr);
+    setRangeEndDate(weekEndStr);
+    setSelectedSpecialty('all');
+    setSelectedDoctor('all');
+    setSelectedStatus('all');
+    setSearchQuery('');
+  };
 
   const specialties = useMemo(() => {
     const set = new Set(doctors.map(d => d.specialty));
@@ -427,6 +471,11 @@ export const AppointmentsModule: React.FC<AppointmentsModuleProps> = ({
       if (selectedDateFilter === 'today' && apt.date !== todayStr) return false;
       if (selectedDateFilter === 'tomorrow' && apt.date !== tomorrowStr) return false;
       if (selectedDateFilter === 'week' && (apt.date < todayStr || apt.date > weekEndStr)) return false;
+      if (selectedDateFilter === 'month' && (apt.date < monthStartStr || apt.date > monthEndStr)) return false;
+      if (selectedDateFilter === 'range') {
+        if (rangeStartDate && apt.date < rangeStartDate) return false;
+        if (rangeEndDate && apt.date > rangeEndDate) return false;
+      }
 
       // Specialty
       if (selectedSpecialty !== 'all' && apt.specialty !== selectedSpecialty) return false;
@@ -449,7 +498,7 @@ export const AppointmentsModule: React.FC<AppointmentsModuleProps> = ({
 
       return true;
     }).sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
-  }, [appointments, selectedDateFilter, selectedSpecialty, selectedDoctor, selectedStatus, searchQuery, todayStr, tomorrowStr, weekEndStr]);
+  }, [appointments, selectedDateFilter, rangeStartDate, rangeEndDate, selectedSpecialty, selectedDoctor, selectedStatus, searchQuery, todayStr, tomorrowStr, weekEndStr, monthStartStr, monthEndStr]);
 
   // Filtered doctors for the directory cartelera
   const filteredDoctors = useMemo(() => {
@@ -706,60 +755,42 @@ export const AppointmentsModule: React.FC<AppointmentsModuleProps> = ({
       {activeTab === 'agenda' && (
         <div className="space-y-4">
           
-          {/* Filters Bar */}
-          <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          {/* Filters Bar with Range Search (Desde - Hasta) and Reset */}
+          <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs space-y-3.5">
+            
+            {/* Top Filter Row: Search, Doctor, Specialty, Status, Reset */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-center">
               
               {/* Search */}
-              <div className="relative md:col-span-1">
+              <div className="relative lg:col-span-4">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
                 <input
                   type="text"
-                  placeholder="Buscar paciente, C.I., médico..."
+                  placeholder="Buscar paciente, C.I., médico, motivo..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 bg-slate-50/50"
+                  className="w-full pl-9 pr-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 bg-slate-50/50 text-slate-800"
                 />
               </div>
 
-              {/* Date Filter Tabs */}
-              <div className="flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200">
-                <button
-                  onClick={() => setSelectedDateFilter('today')}
-                  className={`flex-1 py-1 px-2 text-[11px] font-medium rounded-md transition-all whitespace-nowrap ${
-                    selectedDateFilter === 'today' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
-                  }`}
+              {/* Doctor Filter */}
+              <div className="lg:col-span-3">
+                <select
+                  value={selectedDoctor}
+                  onChange={(e) => setSelectedDoctor(e.target.value)}
+                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 bg-slate-50/50 text-slate-700"
                 >
-                  Hoy
-                </button>
-                <button
-                  onClick={() => setSelectedDateFilter('tomorrow')}
-                  className={`flex-1 py-1 px-2 text-[11px] font-medium rounded-md transition-all whitespace-nowrap ${
-                    selectedDateFilter === 'tomorrow' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  Mañana
-                </button>
-                <button
-                  onClick={() => setSelectedDateFilter('week')}
-                  className={`flex-1 py-1 px-2 text-[11px] font-medium rounded-md transition-all whitespace-nowrap ${
-                    selectedDateFilter === 'week' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  7 Días
-                </button>
-                <button
-                  onClick={() => setSelectedDateFilter('all')}
-                  className={`flex-1 py-1 px-2 text-[11px] font-medium rounded-md transition-all whitespace-nowrap ${
-                    selectedDateFilter === 'all' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  Todas
-                </button>
+                  <option value="all">Todos los Especialistas</option>
+                  {doctors.map(doc => (
+                    <option key={doc.id} value={doc.id}>
+                      {doc.name} ({doc.scheduleDays})
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Specialty Filter */}
-              <div>
+              <div className="lg:col-span-3">
                 <select
                   value={selectedSpecialty}
                   onChange={(e) => setSelectedSpecialty(e.target.value)}
@@ -773,16 +804,16 @@ export const AppointmentsModule: React.FC<AppointmentsModuleProps> = ({
               </div>
 
               {/* Status Filter */}
-              <div>
+              <div className="lg:col-span-2">
                 <select
                   value={selectedStatus}
                   onChange={(e) => setSelectedStatus(e.target.value)}
                   className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 bg-slate-50/50 text-slate-700"
                 >
                   <option value="all">Todos los Estados</option>
-                  <option value="pendiente">Pendiente Confirmación</option>
+                  <option value="pendiente">Pendiente</option>
                   <option value="confirmada">Confirmada</option>
-                  <option value="en_espera">En Sala de Espera</option>
+                  <option value="en_espera">En Sala</option>
                   <option value="en_consulta">En Consulta</option>
                   <option value="completada">Completada</option>
                   <option value="cancelada">Cancelada</option>
@@ -790,6 +821,251 @@ export const AppointmentsModule: React.FC<AppointmentsModuleProps> = ({
               </div>
 
             </div>
+
+            {/* Date Filters Row: Presets + Range Button + Restablecer */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-slate-100">
+              
+              {/* Presets and Range Toggle */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[11px] font-semibold text-slate-500 mr-1 flex items-center gap-1">
+                  <CalendarRange className="w-3.5 h-3.5 text-sky-600" />
+                  <span>Filtrar por Fecha:</span>
+                </span>
+
+                <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                  <button
+                    onClick={() => setSelectedDateFilter('today')}
+                    className={`py-1 px-2.5 text-[11px] font-medium rounded-md transition-all whitespace-nowrap ${
+                      selectedDateFilter === 'today' ? 'bg-white text-slate-900 shadow-2xs font-bold' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Hoy
+                  </button>
+                  <button
+                    onClick={() => setSelectedDateFilter('tomorrow')}
+                    className={`py-1 px-2.5 text-[11px] font-medium rounded-md transition-all whitespace-nowrap ${
+                      selectedDateFilter === 'tomorrow' ? 'bg-white text-slate-900 shadow-2xs font-bold' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Mañana
+                  </button>
+                  <button
+                    onClick={() => setSelectedDateFilter('week')}
+                    className={`py-1 px-2.5 text-[11px] font-medium rounded-md transition-all whitespace-nowrap ${
+                      selectedDateFilter === 'week' ? 'bg-white text-slate-900 shadow-2xs font-bold' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    7 Días
+                  </button>
+                  <button
+                    onClick={() => setSelectedDateFilter('month')}
+                    className={`py-1 px-2.5 text-[11px] font-medium rounded-md transition-all whitespace-nowrap ${
+                      selectedDateFilter === 'month' ? 'bg-white text-slate-900 shadow-2xs font-bold' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Este Mes
+                  </button>
+                  <button
+                    onClick={() => setSelectedDateFilter('range')}
+                    className={`py-1 px-2.5 text-[11px] font-medium rounded-md transition-all whitespace-nowrap flex items-center gap-1 ${
+                      selectedDateFilter === 'range' ? 'bg-sky-600 text-white shadow-2xs font-bold' : 'text-slate-700 hover:text-slate-900 bg-sky-50/60 border border-sky-200'
+                    }`}
+                  >
+                    <CalendarRange className="w-3 h-3" />
+                    <span>Rango Desde - Hasta</span>
+                  </button>
+                  <button
+                    onClick={() => setSelectedDateFilter('all')}
+                    className={`py-1 px-2.5 text-[11px] font-medium rounded-md transition-all whitespace-nowrap ${
+                      selectedDateFilter === 'all' ? 'bg-white text-slate-900 shadow-2xs font-bold' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Todas
+                  </button>
+                </div>
+              </div>
+
+              {/* Button: Restablecer Filtros */}
+              <div className="flex items-center gap-2 self-end sm:self-center">
+                <button
+                  type="button"
+                  onClick={handleResetFilters}
+                  disabled={!isAnyFilterActive}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+                    isAnyFilterActive
+                      ? 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100 shadow-2xs cursor-pointer'
+                      : 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed'
+                  }`}
+                  title="Restablece los filtros de fecha, especialista y búsqueda al día de hoy"
+                >
+                  <RotateCcw className={`w-3.5 h-3.5 ${isAnyFilterActive ? 'text-amber-700' : 'text-slate-400'}`} />
+                  <span>Restablecer Filtros</span>
+                </button>
+              </div>
+
+            </div>
+
+            {/* DEDICATED RANGE SEARCH BAR (Desde / Hasta) */}
+            {selectedDateFilter === 'range' && (
+              <div className="bg-sky-50/70 border border-sky-200 rounded-lg p-3 space-y-2.5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-sky-950">
+                    <CalendarRange className="w-4 h-4 text-sky-600" />
+                    <span>Búsqueda por Rango de Fechas:</span>
+                  </div>
+                  
+                  {/* Quick range shortcuts */}
+                  <div className="flex items-center gap-1 flex-wrap text-[11px]">
+                    <span className="text-slate-500 font-medium mr-1">Accesos directos:</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRangeStartDate(todayStr);
+                        setRangeEndDate(weekEndStr);
+                      }}
+                      className="px-2 py-0.5 rounded bg-white hover:bg-sky-100 border border-sky-200 font-medium text-sky-800 transition-colors"
+                    >
+                      Esta Semana
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const d = new Date();
+                        d.setDate(d.getDate() + 15);
+                        setRangeStartDate(todayStr);
+                        setRangeEndDate(d.toISOString().split('T')[0]);
+                      }}
+                      className="px-2 py-0.5 rounded bg-white hover:bg-sky-100 border border-sky-200 font-medium text-sky-800 transition-colors"
+                    >
+                      Próx. 15 Días
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRangeStartDate(monthStartStr);
+                        setRangeEndDate(monthEndStr);
+                      }}
+                      className="px-2 py-0.5 rounded bg-white hover:bg-sky-100 border border-sky-200 font-medium text-sky-800 transition-colors"
+                    >
+                      Este Mes
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const d = new Date();
+                        d.setMonth(d.getMonth() + 1, 1);
+                        const yr = d.getFullYear();
+                        const mo = d.getMonth() + 1;
+                        const last = new Date(yr, mo, 0).getDate();
+                        setRangeStartDate(`${yr}-${String(mo).padStart(2, '0')}-01`);
+                        setRangeEndDate(`${yr}-${String(mo).padStart(2, '0')}-${String(last).padStart(2, '0')}`);
+                      }}
+                      className="px-2 py-0.5 rounded bg-white hover:bg-sky-100 border border-sky-200 font-medium text-sky-800 transition-colors"
+                    >
+                      Próximo Mes
+                    </button>
+                  </div>
+                </div>
+
+                {/* Date Inputs: Desde / Hasta */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-center">
+                  
+                  {/* Desde */}
+                  <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-sky-200">
+                    <label className="text-[11px] font-bold text-sky-900 whitespace-nowrap">Desde:</label>
+                    <input
+                      type="date"
+                      value={rangeStartDate}
+                      onChange={(e) => setRangeStartDate(e.target.value)}
+                      className="w-full text-xs text-slate-800 font-medium focus:outline-none bg-transparent"
+                    />
+                  </div>
+
+                  {/* Hasta */}
+                  <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-sky-200">
+                    <label className="text-[11px] font-bold text-sky-900 whitespace-nowrap">Hasta:</label>
+                    <input
+                      type="date"
+                      value={rangeEndDate}
+                      onChange={(e) => setRangeEndDate(e.target.value)}
+                      className="w-full text-xs text-slate-800 font-medium focus:outline-none bg-transparent"
+                    />
+                  </div>
+
+                  {/* Quick Reset Range to default */}
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRangeStartDate(todayStr);
+                        setRangeEndDate(weekEndStr);
+                      }}
+                      className="px-3 py-1.5 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg border border-slate-200 text-xs font-semibold inline-flex items-center gap-1"
+                    >
+                      <RotateCcw className="w-3 h-3 text-slate-400" />
+                      <span>Limpiar Rango</span>
+                    </button>
+                  </div>
+
+                </div>
+
+                {/* Range Validation Warning */}
+                {rangeStartDate && rangeEndDate && rangeStartDate > rangeEndDate && (
+                  <div className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 p-2 rounded flex items-center gap-1.5 font-medium">
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                    <span>La fecha "Desde" ({rangeStartDate}) no puede ser posterior a la fecha "Hasta" ({rangeEndDate}).</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Active Filters Summary Bar */}
+            <div className="flex items-center justify-between text-xs text-slate-500 pt-1 flex-wrap gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-semibold text-slate-700">Estado de visualización:</span>
+                <span className="px-2 py-0.5 bg-slate-100 rounded border border-slate-200 font-mono text-[11px] text-slate-800 font-semibold">
+                  {selectedDateFilter === 'today' && `📅 Hoy (${todayStr})`}
+                  {selectedDateFilter === 'tomorrow' && `📅 Mañana (${tomorrowStr})`}
+                  {selectedDateFilter === 'week' && `📅 Próximos 7 Días (${todayStr} al ${weekEndStr})`}
+                  {selectedDateFilter === 'month' && `📅 Este Mes (${monthStartStr} al ${monthEndStr})`}
+                  {selectedDateFilter === 'range' && `📅 Rango: Del ${rangeStartDate || 'inicio'} al ${rangeEndDate || 'fin'}`}
+                  {selectedDateFilter === 'all' && '📅 Todas las fechas registradas'}
+                </span>
+
+                {selectedDoctor !== 'all' && (
+                  <span className="px-2 py-0.5 bg-sky-50 text-sky-800 rounded border border-sky-200 text-[11px] font-semibold flex items-center gap-1">
+                    <span>Especialista: {doctors.find(d => d.id === selectedDoctor)?.name}</span>
+                    <button onClick={() => setSelectedDoctor('all')} className="hover:text-sky-950 font-bold ml-0.5">×</button>
+                  </span>
+                )}
+
+                {selectedSpecialty !== 'all' && (
+                  <span className="px-2 py-0.5 bg-indigo-50 text-indigo-800 rounded border border-indigo-200 text-[11px] font-semibold flex items-center gap-1">
+                    <span>{selectedSpecialty}</span>
+                    <button onClick={() => setSelectedSpecialty('all')} className="hover:text-indigo-950 font-bold ml-0.5">×</button>
+                  </span>
+                )}
+
+                {selectedStatus !== 'all' && (
+                  <span className="px-2 py-0.5 bg-purple-50 text-purple-800 rounded border border-purple-200 text-[11px] font-semibold flex items-center gap-1">
+                    <span>Estado: {selectedStatus}</span>
+                    <button onClick={() => setSelectedStatus('all')} className="hover:text-purple-950 font-bold ml-0.5">×</button>
+                  </span>
+                )}
+
+                {searchQuery.trim() && (
+                  <span className="px-2 py-0.5 bg-amber-50 text-amber-800 rounded border border-amber-200 text-[11px] font-semibold flex items-center gap-1">
+                    <span>Búsqueda: "{searchQuery}"</span>
+                    <button onClick={() => setSearchQuery('')} className="hover:text-amber-950 font-bold ml-0.5">×</button>
+                  </span>
+                )}
+              </div>
+
+              <div className="font-semibold text-slate-700">
+                {filteredAppointments.length} {filteredAppointments.length === 1 ? 'cita encontrada' : 'citas encontradas'}
+              </div>
+            </div>
+
           </div>
 
           {/* Appointments List / Table */}
@@ -801,8 +1077,13 @@ export const AppointmentsModule: React.FC<AppointmentsModuleProps> = ({
                   Citas Médicas Programadas ({filteredAppointments.length})
                 </h2>
               </div>
-              <span className="text-xs text-slate-500">
-                {selectedDateFilter === 'today' ? `Día de hoy: ${todayStr}` : 'Mostrando resultados según filtro'}
+              <span className="text-xs text-slate-500 font-mono">
+                {selectedDateFilter === 'today' && `Hoy: ${todayStr}`}
+                {selectedDateFilter === 'tomorrow' && `Mañana: ${tomorrowStr}`}
+                {selectedDateFilter === 'week' && `7 Días (${todayStr} a ${weekEndStr})`}
+                {selectedDateFilter === 'month' && `Mes: ${monthStartStr} a ${monthEndStr}`}
+                {selectedDateFilter === 'range' && `Rango: ${rangeStartDate} a ${rangeEndDate}`}
+                {selectedDateFilter === 'all' && 'Historial Completo'}
               </span>
             </div>
 
