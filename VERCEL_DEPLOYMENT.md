@@ -8,9 +8,13 @@ Este proyecto está 100% preparado y optimizado para ser desplegado en **Vercel*
 
 1. **`vercel.json`**:
    - Define el framework como **Vite**.
+   - Comando de instalación: `npm install --legacy-peer-deps` (evita conflictos de peer dependencies).
    - Comando de compilación: `npm run build`.
    - Carpeta de salida: `dist`.
    - Reglas de reescritura (`rewrites`) para soportar enrutamiento Single Page Application (SPA).
+
+2. **`.npmrc`**:
+   - Configurado con `legacy-peer-deps=true` para garantizar que la instalación de dependencias en Vercel y entornos de CI/CD sea 100% limpia sin errores de ERESOLVE.
 
 ---
 

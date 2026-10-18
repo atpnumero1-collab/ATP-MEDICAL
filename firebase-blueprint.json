@@ -1,0 +1,155 @@
+{
+  "entities": {
+    "doctor": {
+      "title": "Doctor",
+      "description": "Medical specialist at ATP Medical Venezuela",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "specialty": { "type": "string" },
+        "scheduleDays": { "type": "string" },
+        "scheduleHours": { "type": "string" },
+        "room": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "status": {
+          "type": "string",
+          "enum": ["disponible", "en_consulta", "en_pausa", "fuera_turno"]
+        },
+        "shiftStart": { "type": "string" },
+        "shiftEnd": { "type": "string" },
+        "activePatientName": { "type": "string" }
+      },
+      "required": ["id", "name", "specialty", "scheduleDays", "scheduleHours", "room", "status"]
+    },
+    "patient": {
+      "title": "Patient",
+      "description": "Registered patient in ATP Medical",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "dni": { "type": "string" },
+        "fullName": { "type": "string" },
+        "birthDate": { "type": "string" },
+        "gender": { "type": "string", "enum": ["Masculino", "Femenino", "Otro"] },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "address": { "type": "string" },
+        "insurance": { "type": "string" },
+        "bloodGroup": { "type": "string" },
+        "allergies": { "type": "array" },
+        "chronicConditions": { "type": "array" },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "dni", "fullName", "phone"]
+    },
+    "appointment": {
+      "title": "Appointment",
+      "description": "Scheduled medical appointment",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "patientId": { "type": "string" },
+        "patientName": { "type": "string" },
+        "patientDni": { "type": "string" },
+        "patientPhone": { "type": "string" },
+        "doctorId": { "type": "string" },
+        "doctorName": { "type": "string" },
+        "specialty": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "durationMinutes": { "type": "number" },
+        "type": { "type": "string" },
+        "status": {
+          "type": "string",
+          "enum": ["pendiente", "confirmada", "en_espera", "en_consulta", "completada", "cancelada"]
+        },
+        "reason": { "type": "string" },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "source": { "type": "string" },
+        "isSelfManaged": { "type": "boolean" },
+        "patientEmail": { "type": "string" }
+      },
+      "required": ["id", "patientId", "patientName", "doctorId", "doctorName", "specialty", "date", "time", "status"]
+    },
+    "intake": {
+      "title": "PatientIntake",
+      "description": "Real-time queue ticket in clinic waiting room",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "ticketNumber": { "type": "string" },
+        "patientId": { "type": "string" },
+        "patientName": { "type": "string" },
+        "patientDni": { "type": "string" },
+        "patientAge": { "type": "number" },
+        "patientAddress": { "type": "string" },
+        "patientPhone": { "type": "string" },
+        "patientEmail": { "type": "string" },
+        "appointmentId": { "type": "string" },
+        "admissionTime": { "type": "string" },
+        "priorityLevel": { "type": "number" },
+        "chiefComplaint": { "type": "string" },
+        "doctorId": { "type": "string" },
+        "doctorName": { "type": "string" },
+        "specialty": { "type": "string" },
+        "room": { "type": "string" },
+        "status": {
+          "type": "string",
+          "enum": ["pendiente_pago", "en_espera", "en_atencion", "atendido", "en_consulta", "llamado", "en_triaje", "cancelado"]
+        },
+        "paymentMethod": { "type": "string" },
+        "paymentConfirmedAt": { "type": "string" },
+        "calledAt": { "type": "string" },
+        "attendedAt": { "type": "string" },
+        "consentSigned": { "type": "boolean" },
+        "notes": { "type": "string" }
+      },
+      "required": ["id", "ticketNumber", "patientName", "patientDni", "doctorId", "doctorName", "specialty", "status"]
+    },
+    "clinicConfig": {
+      "title": "ClinicConfig",
+      "description": "Clinic branding, address and colors configuration",
+      "type": "object",
+      "properties": {
+        "clinicName": { "type": "string" },
+        "branchName": { "type": "string" },
+        "slogan": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "address": { "type": "string" },
+        "primaryColor": { "type": "string" },
+        "accentColor": { "type": "string" },
+        "secondaryColor": { "type": "string" },
+        "enableAudioChime": { "type": "boolean" },
+        "activePresetId": { "type": "string" }
+      },
+      "required": ["clinicName", "primaryColor", "accentColor"]
+    }
+  },
+  "firestore": {
+    "/doctors/{doctorId}": {
+      "schema": "doctor",
+      "description": "Roster of medical professionals and their consultation status"
+    },
+    "/patients/{patientId}": {
+      "schema": "patient",
+      "description": "Patient records and medical history contact info"
+    },
+    "/appointments/{appointmentId}": {
+      "schema": "appointment",
+      "description": "Scheduled appointments across doctor schedules"
+    },
+    "/intakes/{intakeId}": {
+      "schema": "intake",
+      "description": "Real-time queue tickets for the waiting room and clinic flow"
+    },
+    "/config/{configId}": {
+      "schema": "clinicConfig",
+      "description": "Clinic settings and colors configuration"
+    }
+  }
+}

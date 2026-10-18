@@ -72,6 +72,7 @@ export interface Appointment {
   patientName: string;
   patientDni: string;
   patientPhone: string;
+  patientEmail?: string;
   doctorId: string;
   doctorName: string;
   specialty: string;
@@ -83,6 +84,8 @@ export interface Appointment {
   reason: string;
   notes?: string;
   createdAt: string;
+  source?: 'recepcion' | 'autogestionada' | 'whatsapp' | string;
+  isSelfManaged?: boolean;
 }
 
 export type PaymentMethod = 
@@ -142,3 +145,33 @@ export interface ClinicConfig {
   enableAudioChime: boolean;
   activePresetId: string;
 }
+
+export interface MedicalRecord {
+  id: string;
+  recordNumber: string; // Ej: "HM-2026-001"
+  patientId: string;
+  patientName: string;
+  patientDni: string;
+  patientAge?: number;
+  patientGender?: string;
+  patientPhone?: string;
+  doctorId: string;
+  doctorName: string;
+  specialty: string;
+  room?: string;
+  date: string; // YYYY-MM-DD
+  time: string; // HH:mm
+  chiefComplaint: string; // Motivo de Consulta
+  currentIllness: string; // Enfermedad Actual / Anamnesis
+  vitals?: VitalSigns; // Signos Vitales
+  physicalExam: string; // Examen Físico
+  diagnosis: string; // Diagnóstico Clínico / CIE-10
+  treatmentPlan: string; // Plan de Tratamiento / Indicaciones
+  prescriptions?: string; // Récipe Médico / Medicamentos
+  complementaryStudies?: string; // Exámenes o Estudios Solicitados
+  nextFollowUpDate?: string; // Próximo Control
+  doctorNotes?: string; // Notas de evolución
+  createdAt: string; // ISO String
+  updatedAt?: string;
+}
+

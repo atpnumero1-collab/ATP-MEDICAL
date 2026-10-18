@@ -33,7 +33,9 @@ import {
   ShieldAlert,
   CalendarRange,
   RotateCcw,
-  Filter
+  Filter,
+  Share2,
+  ExternalLink
 } from 'lucide-react';
 import { getTodayDateString } from '../../data/initialData';
 
@@ -244,6 +246,7 @@ interface AppointmentsModuleProps {
   onPassToIntake: (appointment: Appointment) => void;
   isOpenNewModal: boolean;
   setIsOpenNewModal: (open: boolean) => void;
+  onOpenPatientPortal?: () => void;
 }
 
 export const AppointmentsModule: React.FC<AppointmentsModuleProps> = ({
@@ -255,7 +258,8 @@ export const AppointmentsModule: React.FC<AppointmentsModuleProps> = ({
   onUpdateStatus,
   onPassToIntake,
   isOpenNewModal,
-  setIsOpenNewModal
+  setIsOpenNewModal,
+  onOpenPatientPortal
 }) => {
   // Main view tab: 'agenda' | 'doctors-schedule' | 'weekly-grid'
   const [activeTab, setActiveTab] = useState<'agenda' | 'doctors-schedule' | 'weekly-grid'>('agenda');
@@ -271,7 +275,31 @@ export const AppointmentsModule: React.FC<AppointmentsModuleProps> = ({
   const [selectedSpecialty, setSelectedSpecialty] = useState<string>('all');
   const [selectedDoctor, setSelectedDoctor] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [selectedSourceFilter, setSelectedSourceFilter] = useState<'all' | 'autogestionada' | 'recepcion'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [copiedPortalLink, setCopiedPortalLink] = useState(false);
+
+  // Portal URL calculation
+  const publicPortalUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}${window.location.pathname}?portal=autogestion`
+    : '?portal=autogestion';
+
+  const handleCopyPortalLink = () => {
+    navigator.clipboard.writeText(publicPortalUrl);
+    setCopiedPortalLink(true);
+    setTimeout(() => setCopiedPortalLink(false), 2500);
+  };
+
+  const handleShareWhatsAppLink = () => {
+    const msg = encodeURIComponent(
+      `Hola, le saludamos de *${config.clinicName}* (C.C. Parque Humboldt, Caracas).\n\n` +
+      `Puede consultar nuestros médicos especialistas y *autogestionar su cita médica* de forma rápida y segura desde su teléfono en el siguiente enlace oficial:\n\n` +
+      `${publicPortalUrl}\n\n` +
+      `_Estamos para servirle. Teléfono de contacto: ${config.phone}_`
+    );
+    window.open(`https://api.whatsapp.com/send?text=${msg}`, '_blank');
+  };
+
 
   // Filter for Doctors schedule view
   const [filterDay, setFilterDay] = useState<string>('ALL');
@@ -486,6 +514,10 @@ export const AppointmentsModule: React.FC<AppointmentsModuleProps> = ({
       // Status
       if (selectedStatus !== 'all' && apt.status !== selectedStatus) return false;
 
+      // Source (Autogestionada vs Recepción)
+      if (selectedSourceFilter === 'autogestionada' && !apt.isSelfManaged && apt.source !== 'autogestionada') return false;
+      if (selectedSourceFilter === 'recepcion' && (apt.isSelfManaged || apt.source === 'autogestionada')) return false;
+
       // Search
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase();
@@ -498,7 +530,8 @@ export const AppointmentsModule: React.FC<AppointmentsModuleProps> = ({
 
       return true;
     }).sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
-  }, [appointments, selectedDateFilter, rangeStartDate, rangeEndDate, selectedSpecialty, selectedDoctor, selectedStatus, searchQuery, todayStr, tomorrowStr, weekEndStr, monthStartStr, monthEndStr]);
+  }, [appointments, selectedDateFilter, rangeStartDate, rangeEndDate, selectedSpecialty, selectedDoctor, selectedStatus, selectedSourceFilter, searchQuery, todayStr, tomorrowStr, weekEndStr, monthStartStr, monthEndStr]);
+
 
   // Filtered doctors for the directory cartelera
   const filteredDoctors = useMemo(() => {
@@ -667,8 +700,75 @@ export const AppointmentsModule: React.FC<AppointmentsModuleProps> = ({
         </div>
       </div>
 
+      {/* Link de Autogestión para Pacientes (WhatsApp) Banner */}
+      <div className="bg-gradient-to-r from-emerald-600 via-teal-700 to-sky-800 text-white p-4 sm:p-5 rounded-2xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-start gap-3.5">
+          <div className="p-2.5 rounded-xl bg-white/15 backdrop-blur-xs text-white shrink-0">
+            <Share2 className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="font-bold text-sm sm:text-base tracking-tight">
+                Enlace de Autogestión de Citas para Pacientes (WhatsApp)
+              </h2>
+              <span className="bg-emerald-400/25 text-emerald-100 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border border-emerald-300/40">
+                Identificador: Autogestionada
+              </span>
+            </div>
+            <p className="text-xs text-emerald-100 mt-1 max-w-2xl leading-relaxed">
+              Envía este enlace por WhatsApp a los pacientes. Les permite seleccionar su especialista, ver los días y horarios oficiales y agendar su cita. Toda cita creada aquí aparecerá etiquetada como <b>«Autogestionada»</b>.
+            </p>
+            <div className="mt-2 text-xs font-mono bg-black/20 text-emerald-100 px-3 py-1.5 rounded-lg border border-white/10 select-all truncate max-w-md">
+              {publicPortalUrl}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+          <button
+            type="button"
+            onClick={handleCopyPortalLink}
+            className="px-3.5 py-2 rounded-xl bg-white text-slate-900 hover:bg-slate-50 font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all active:scale-95"
+          >
+            {copiedPortalLink ? (
+              <>
+                <Check className="w-4 h-4 text-emerald-600" />
+                <span>¡Copiado!</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-4 h-4 text-slate-700" />
+                <span>Copiar Enlace</span>
+              </>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleShareWhatsAppLink}
+            className="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all active:scale-95"
+            title="Compartir link directo a través de WhatsApp Web / App"
+          >
+            <Phone className="w-4 h-4" />
+            <span>Compartir WhatsApp</span>
+          </button>
+
+          {onOpenPatientPortal && (
+            <button
+              type="button"
+              onClick={onOpenPatientPortal}
+              className="px-3 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white font-semibold text-xs transition-all border border-white/20"
+              title="Abrir portal de autogestión para probarlo como paciente"
+            >
+              <span>Probar Portal</span>
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Metrics Row */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+
         <div className="bg-white p-3.5 rounded-lg border border-slate-200/80 shadow-xs">
           <span className="text-xs text-slate-500 font-medium">Citas Hoy</span>
           <div className="text-2xl font-bold text-slate-900 mt-0.5 font-mono tabular-nums">
@@ -1156,7 +1256,14 @@ export const AppointmentsModule: React.FC<AppointmentsModuleProps> = ({
                             <span className={`text-[11px] font-medium px-2 py-0.5 rounded border ${statusColors[apt.status].bg} ${statusColors[apt.status].text}`}>
                               {statusLabels[apt.status]}
                             </span>
+                            {(apt.isSelfManaged || apt.source === 'autogestionada') && (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-violet-100 text-violet-800 border border-violet-200" title="Cita autogestionada directamente por el paciente vía WhatsApp / Web">
+                                <Sparkles className="w-3 h-3 text-violet-600" />
+                                <span>Autogestionada</span>
+                              </span>
+                            )}
                           </div>
+
 
                           <div className="flex items-center gap-2 text-xs text-slate-500 flex-wrap">
                             <span className="font-bold text-slate-800 flex items-center gap-1">

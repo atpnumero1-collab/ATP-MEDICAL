@@ -52,25 +52,39 @@ export const loadStoredData = () => {
       saveToStorage('DOCTORS', INITIAL_DOCTORS);
     }
 
-    let loadedAppointments = appointmentsRaw ? (JSON.parse(appointmentsRaw) as Appointment[]) : INITIAL_APPOINTMENTS;
-    // Check if appointments reference outdated doctors
-    const hasOutdatedAppointments = loadedAppointments.some(a => a.doctorName.includes('Silva Morales') || a.doctorName.includes('Castillo Bravo') || a.patientDni.includes('-K'));
-    if (hasOutdatedAppointments) {
-      loadedAppointments = INITIAL_APPOINTMENTS;
-      saveToStorage('APPOINTMENTS', INITIAL_APPOINTMENTS);
-    }
+    let loadedAppointments = appointmentsRaw ? (JSON.parse(appointmentsRaw) as Appointment[]) : [];
+    // Purge test appointments
+    loadedAppointments = loadedAppointments.filter(a => 
+      !['apt-1', 'apt-2', 'apt-3', 'apt-4', 'apt-5', 'apt-6'].includes(a.id) &&
+      !a.doctorName.includes('Silva Morales') &&
+      !a.doctorName.includes('Castillo Bravo') &&
+      !a.patientDni.includes('-K') &&
+      !a.patientName.includes('Elena Gómez') &&
+      !a.patientName.includes('Lucas Benítez')
+    );
+    saveToStorage('APPOINTMENTS', loadedAppointments);
 
-    let loadedPatients = patientsRaw ? (JSON.parse(patientsRaw) as Patient[]) : INITIAL_PATIENTS;
-    if (loadedPatients.some(p => p.dni.includes('-K') || p.phone.startsWith('+56'))) {
-      loadedPatients = INITIAL_PATIENTS;
-      saveToStorage('PATIENTS', INITIAL_PATIENTS);
-    }
+    let loadedPatients = patientsRaw ? (JSON.parse(patientsRaw) as Patient[]) : [];
+    // Purge test patients
+    loadedPatients = loadedPatients.filter(p => 
+      !['pat-1', 'pat-2', 'pat-3', 'pat-4', 'pat-5', 'pat-6'].includes(p.id) &&
+      !p.dni.includes('-K') &&
+      !p.phone.startsWith('+56') &&
+      !['Elena Gómez Suárez', 'Lucas Benítez Díaz', 'Mateo Valenzuela Rivas', 'Camila Rojas Navarrete', 'Ignacio Tapia Cordero', 'Rosa María Carrasco Silva'].includes(p.fullName)
+    );
+    saveToStorage('PATIENTS', loadedPatients);
 
-    let loadedIntakes = intakesRaw ? (JSON.parse(intakesRaw) as PatientIntake[]) : INITIAL_INTAKES;
-    if (loadedIntakes.some(i => i.doctorName.includes('Silva Morales') || i.patientDni.includes('-K'))) {
-      loadedIntakes = INITIAL_INTAKES;
-      saveToStorage('INTAKES', INITIAL_INTAKES);
-    }
+    let loadedIntakes = intakesRaw ? (JSON.parse(intakesRaw) as PatientIntake[]) : [];
+    // Purge test intakes
+    loadedIntakes = loadedIntakes.filter(i => 
+      !['intake-1', 'intake-2', 'intake-3', 'intake-4', 'intake-5'].includes(i.id) &&
+      !i.doctorName.includes('Silva Morales') &&
+      !i.patientDni.includes('-K') &&
+      !i.patientName.includes('Elena Gómez') &&
+      !i.patientName.includes('Lucas Benítez')
+    );
+    saveToStorage('INTAKES', loadedIntakes);
+
 
     return {
       config: loadedConfig,

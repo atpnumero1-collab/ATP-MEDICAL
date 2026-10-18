@@ -380,10 +380,10 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
           {/* Backup & System Reset */}
           <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs space-y-3 text-xs">
             <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-              Gestión de Base de Datos Local
+              Gestión de Base de Datos & Respaldo
             </h2>
             <p className="text-slate-500 text-[11px]">
-              Los datos se conservan automáticamente en el navegador. Puede exportar un respaldo completo o restaurar la demo inicial.
+              La información está sincronizada en tiempo real con Firebase Firestore. Puede exportar un respaldo completo o limpiar datos de prueba dejando únicamente a los médicos oficiales.
             </p>
 
             <div className="flex items-center gap-2 pt-1">
@@ -401,10 +401,11 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
                 className="flex-1 py-1.5 px-3 rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 flex items-center justify-center gap-1.5 font-medium"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
-                <span>Restaurar Demo</span>
+                <span>Limpiar Datos de Prueba</span>
               </button>
             </div>
           </div>
+
 
         </div>
 

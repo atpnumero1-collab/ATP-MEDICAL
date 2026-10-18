@@ -8,7 +8,9 @@ import {
   BarChart3, 
   Palette, 
   PlusCircle,
-  Bell
+  Bell,
+  FileText,
+  Share2
 } from 'lucide-react';
 import { ClinicConfig } from '../types';
 
@@ -16,6 +18,7 @@ export type ActiveModule =
   | 'tickets'
   | 'waitingRoom'
   | 'appointments' 
+  | 'medicalRecords'
   | 'patients' 
   | 'doctors' 
   | 'reports' 
@@ -27,6 +30,7 @@ interface NavigationProps {
   config: ClinicConfig;
   onQuickIntake: () => void;
   onQuickAppointment: () => void;
+  onSharePortalLink?: () => void;
   pendingIntakesCount: number;
 }
 
@@ -36,17 +40,20 @@ export const Navigation: React.FC<NavigationProps> = ({
   config,
   onQuickIntake,
   onQuickAppointment,
+  onSharePortalLink,
   pendingIntakesCount
 }) => {
   const navItems = [
     { id: 'tickets' as const, label: 'Creación de tickets', icon: PlusCircle },
     { id: 'waitingRoom' as const, label: 'Pacientes en sala', icon: Tv, badge: pendingIntakesCount },
     { id: 'appointments' as const, label: 'Citas y Agendamiento', icon: Calendar },
+    { id: 'medicalRecords' as const, label: 'Historias Médicas', icon: FileText },
     { id: 'patients' as const, label: 'Directorio Pacientes', icon: Users },
     { id: 'doctors' as const, label: 'Médicos & Box', icon: Stethoscope },
     { id: 'reports' as const, label: 'Métricas', icon: BarChart3 },
     { id: 'settings' as const, label: 'Ajuste Colores', icon: Palette },
   ];
+
 
   return (
     <header className="sticky top-0 z-30 bg-white border-b border-slate-200/80 shadow-xs">
@@ -123,6 +130,19 @@ export const Navigation: React.FC<NavigationProps> = ({
 
           {/* Zone 3: Primary Action & Quick Admission */}
           <div className="flex items-center gap-2 shrink-0">
+            {onSharePortalLink && (
+              <button
+                type="button"
+                onClick={onSharePortalLink}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-md transition-colors whitespace-nowrap shrink-0"
+                title="Copiar o compartir enlace de autogestión de citas para enviar por WhatsApp a los pacientes"
+              >
+                <Share2 className="w-3.5 h-3.5 text-emerald-600" />
+                <span className="hidden sm:inline">Link WhatsApp</span>
+                <span className="sm:hidden">WhatsApp</span>
+              </button>
+            )}
+
             <button
               onClick={onQuickAppointment}
               className="hidden md:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors whitespace-nowrap shrink-0"
@@ -131,6 +151,7 @@ export const Navigation: React.FC<NavigationProps> = ({
               <Calendar className="w-3.5 h-3.5 text-slate-500" />
               <span>Nueva Cita</span>
             </button>
+
             <button
               onClick={onQuickIntake}
               className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white rounded-md shadow-xs hover:opacity-95 active:scale-98 transition-all whitespace-nowrap shrink-0"
