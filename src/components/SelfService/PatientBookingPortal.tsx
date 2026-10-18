@@ -30,7 +30,6 @@ interface PatientBookingPortalProps {
   config: ClinicConfig;
   onBookAppointment: (appointment: Omit<Appointment, 'id' | 'createdAt'>) => Promise<string>;
   onRegisterPatient?: (patient: Patient) => void;
-  onBackToAdmin?: () => void;
 }
 
 export const PatientBookingPortal: React.FC<PatientBookingPortalProps> = ({
@@ -39,8 +38,7 @@ export const PatientBookingPortal: React.FC<PatientBookingPortalProps> = ({
   patients,
   config,
   onBookAppointment,
-  onRegisterPatient,
-  onBackToAdmin
+  onRegisterPatient
 }) => {
   // Wizard steps: 1 = Doctor, 2 = Date & Time, 3 = Patient Data, 4 = Success
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
@@ -334,22 +332,11 @@ export const PatientBookingPortal: React.FC<PatientBookingPortalProps> = ({
               href={`https://wa.me/584143651970?text=${encodeURIComponent('Hola ATP Medical, tengo una consulta sobre mi cita médica.')}`}
               target="_blank"
               rel="noreferrer"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100 transition-colors shadow-xs"
             >
-              <Phone className="w-3.5 h-3.5" />
+              <Phone className="w-3.5 h-3.5 text-emerald-600" />
               <span>Ayuda WhatsApp</span>
             </a>
-
-            {onBackToAdmin && (
-              <button
-                type="button"
-                onClick={onBackToAdmin}
-                className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors border border-transparent hover:border-slate-200"
-                title="Acceso administrativo para el personal de la clínica"
-              >
-                Personal
-              </button>
-            )}
           </div>
         </div>
 

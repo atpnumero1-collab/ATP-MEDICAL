@@ -2,36 +2,36 @@ import { Patient, Doctor, Appointment, PatientIntake, ClinicConfig } from '../ty
 
 export const COLOR_PRESETS = [
   {
-    id: 'atp-venezuela',
-    name: 'ATP Medical Venezuela (Oficial Caracas)',
-    primary: '#002B49',
-    accent: '#009FE3',
-    secondary: '#00C49F',
-    description: 'Identidad corporativa oficial de ATP Medical Caracas (Parque Humboldt): Azul Marino Profundo, Cian Energía ATP y Menta Vital.'
+    id: 'atp-vivos',
+    name: 'ATP Colores Vivos (Oficial Caracas)',
+    primary: '#0B5ED7',
+    accent: '#00A3FF',
+    secondary: '#00C48C',
+    description: 'Identidad viva y luminosa de ATP Medical Caracas: Azul Rey Vibrante, Cian Eléctrico y Verde Vital.'
   },
   {
-    id: 'atp-deep',
-    name: 'ATP Deep Royal & Sky Blue',
-    primary: '#0F1E36',
-    accent: '#0284C7',
+    id: 'atp-zafiro',
+    name: 'ATP Zafiro & Cian Neón',
+    primary: '#0047AB',
+    accent: '#00D2FF',
     secondary: '#10B981',
-    description: 'Contraste sobrio de alta gama para centros quirúrgicos y ambulatorios.'
+    description: 'Colores de alta intensidad y contraste para clínicas dinámicas.'
   },
   {
     id: 'atp-emerald',
-    name: 'ATP Bio-Salud & Esmeralda',
-    primary: '#064E3B',
-    accent: '#0D9488',
-    secondary: '#0284C7',
+    name: 'ATP Bio-Salud & Esmeralda Radiante',
+    primary: '#059669',
+    accent: '#06B6D4',
+    secondary: '#3B82F6',
     description: 'Enfoque en medicina preventiva, bienestar y rehabilitación celular.'
   },
   {
-    id: 'atp-midnight',
-    name: 'ATP Midnight Slate & Bright Teal',
-    primary: '#1E293B',
+    id: 'atp-energy',
+    name: 'ATP Energía Pura & Índigo',
+    primary: '#4F46E5',
     accent: '#06B6D4',
     secondary: '#10B981',
-    description: 'Aspecto tecnológico minimalista para clínicas digitales de última generación.'
+    description: 'Aspecto tecnológico y moderno con tonos energéticos de máxima nitidez.'
   }
 ];
 
@@ -42,11 +42,11 @@ export const INITIAL_CONFIG: ClinicConfig = {
   phone: '+58 414-3651970',
   email: 'atpnumero1@gmail.com',
   address: 'Piso 1, Oficina 5, Centro Comercial Parque Humboldt, Caracas 1080, Miranda',
-  primaryColor: '#002B49',
-  accentColor: '#009FE3',
-  secondaryColor: '#00C49F',
+  primaryColor: '#0B5ED7',
+  accentColor: '#00A3FF',
+  secondaryColor: '#00C48C',
   enableAudioChime: true,
-  activePresetId: 'atp-venezuela'
+  activePresetId: 'atp-vivos'
 };
 
 export const INITIAL_DOCTORS: Doctor[] = [

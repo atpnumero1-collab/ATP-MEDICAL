@@ -1,12 +1,12 @@
 @import "tailwindcss";
 
 :root {
-  --color-primary: #002b49;
-  --color-primary-light: #0d3b66;
-  --color-accent: #009fe3;
-  --color-accent-hover: #0088c4;
-  --color-accent-soft: rgba(0, 159, 227, 0.1);
-  --color-secondary: #00c49f;
+  --color-primary: #0b5ed7;
+  --color-primary-light: #2563eb;
+  --color-accent: #00a3ff;
+  --color-accent-hover: #0284c7;
+  --color-accent-soft: rgba(0, 163, 255, 0.12);
+  --color-secondary: #00c48c;
   --color-surface: #ffffff;
   --color-canvas: #f8fafc;
   --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;

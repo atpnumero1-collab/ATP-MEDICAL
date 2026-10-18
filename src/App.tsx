@@ -76,12 +76,15 @@ export default function App() {
   const [cloudSynced, setCloudSynced] = useState(false);
   const [activeModule, setActiveModule] = useState<ActiveModule>('tickets');
 
-  // Check if patient accessed via self-service portal link (?portal=autogestion)
-  const [isPatientPortal, setIsPatientPortal] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    const params = new URLSearchParams(window.location.search);
-    return params.get('portal') === 'autogestion' || window.location.search.includes('autogestion');
-  });
+  // Check if patient accessed via public self-service portal link (?portal=autogestion)
+  const isDirectPatientUrl = typeof window !== 'undefined' && (
+    new URLSearchParams(window.location.search).get('portal') === 'autogestion' || 
+    window.location.search.includes('autogestion') ||
+    window.location.hash.includes('autogestion')
+  );
+
+  // Staff preview mode for testing portal from within admin
+  const [isStaffPortalPreview, setIsStaffPortalPreview] = useState(false);
 
   // Modal for sharing portal link via WhatsApp
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -350,27 +353,44 @@ export default function App() {
     window.open(`https://api.whatsapp.com/send?text=${msg}`, '_blank');
   };
 
-  // IF PATIENT PORTAL IS ACTIVE (opened via WhatsApp link or test button)
-  if (isPatientPortal) {
+  // IF PATIENT PORTAL IS ACTIVE (either public direct link or staff preview)
+  if (isDirectPatientUrl || isStaffPortalPreview) {
     return (
-      <PatientBookingPortal
-        doctors={doctors}
-        appointments={appointments}
-        patients={patients}
-        config={config}
-        onBookAppointment={handleBookSelfManagedAppointment}
-        onRegisterPatient={handleAddPatient}
-        onBackToAdmin={() => setIsPatientPortal(false)}
-      />
+      <div className="min-h-screen bg-slate-50 relative">
+        {/* Only shown to staff in admin preview mode when not accessing via the direct public link */}
+        {isStaffPortalPreview && !isDirectPatientUrl && (
+          <aside aria-label="Vista Previa Personal" className="sticky top-0 z-50 bg-slate-900 text-white px-4 py-2 text-xs font-semibold flex items-center justify-between shadow-lg">
+            <span className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>Vista Previa del Portal de Pacientes (Solo Personal Clínico)</span>
+            </span>
+            <button
+              onClick={() => setIsStaffPortalPreview(false)}
+              className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-xs font-bold transition-colors cursor-pointer shadow-xs"
+            >
+              ✕ Cerrar Vista Previa
+            </button>
+          </aside>
+        )}
+
+        <PatientBookingPortal
+          doctors={doctors}
+          appointments={appointments}
+          patients={patients}
+          config={config}
+          onBookAppointment={handleBookSelfManagedAppointment}
+          onRegisterPatient={handleAddPatient}
+        />
+      </div>
     );
   }
 
   const pendingIntakesCount = intakes.filter(i => i.status === 'en_espera' || i.status === 'pendiente_pago' || i.status === 'llamado').length;
 
   return (
-    <div className="min-h-screen bg-slate-50/70 text-slate-900 flex flex-col antialiased">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-sky-50/20 to-blue-50/25 text-slate-900 flex flex-col antialiased">
       
-      {/* Navigation Top Bar */}
+      {/* Navigation Top Bar - Sticky with Modules ALWAYS Visible */}
       <Navigation
         activeModule={activeModule}
         setActiveModule={setActiveModule}
@@ -385,36 +405,6 @@ export default function App() {
         onSharePortalLink={() => setIsShareModalOpen(true)}
         pendingIntakesCount={pendingIntakesCount}
       />
-
-      {/* Realtime Live Database Status Indicator Banner */}
-      <div className="bg-emerald-50 border-b border-emerald-200/80 px-4 py-1.5 text-xs text-emerald-900">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            <span className="font-semibold text-emerald-800">
-              Base de Datos Firebase Firestore en Tiempo Real Conectada
-            </span>
-            <span className="hidden sm:inline text-emerald-600/80">
-              — Todas las citas, historias médicas, tickets y cambios se sincronizan en vivo entre todos los usuarios.
-            </span>
-          </div>
-          <div className="flex items-center gap-2 text-[11px] text-emerald-700 font-medium">
-            <button
-              onClick={() => setIsShareModalOpen(true)}
-              className="hidden md:inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-900 underline font-semibold"
-            >
-              <Share2 className="w-3 h-3" />
-              <span>Link Autogestión Pacientes</span>
-            </button>
-            <span className="bg-emerald-100/90 text-emerald-800 px-2 py-0.5 rounded font-mono">
-              Plan Gratuito Activo
-            </span>
-          </div>
-        </div>
-      </div>
 
       {/* Main Content Viewport */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -454,7 +444,7 @@ export default function App() {
             onPassToIntake={handlePassToIntake}
             isOpenNewModal={isNewAppointmentModalOpen}
             setIsOpenNewModal={setIsNewAppointmentModalOpen}
-            onOpenPatientPortal={() => setIsPatientPortal(true)}
+            onOpenPatientPortal={() => setIsStaffPortalPreview(true)}
           />
         )}
 
@@ -604,7 +594,7 @@ export default function App() {
                   type="button"
                   onClick={() => {
                     setIsShareModalOpen(false);
-                    setIsPatientPortal(true);
+                    setIsStaffPortalPreview(true);
                   }}
                   className="py-2.5 px-4 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5"
                 >
@@ -628,17 +618,12 @@ export default function App() {
             <span className="font-mono font-bold text-slate-900">{config.phone}</span>
           </div>
 
-          <div className="flex items-center gap-3 text-slate-400 text-[11px]">
+          <div className="flex items-center gap-3 text-slate-500 text-[11px] font-medium">
             <span>{config.email}</span>
-            <span>·</span>
-            <span className="inline-flex items-center gap-1 text-emerald-700 font-medium">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-              Cloud Realtime Activo
-            </span>
             <span>·</span>
             <button 
               onClick={() => setActiveModule('settings')}
-              className="text-sky-600 hover:underline font-medium"
+              className="text-blue-600 hover:text-blue-800 font-bold hover:underline"
             >
               Ajustar Colores
             </button>

@@ -37,11 +37,16 @@ export const loadStoredData = () => {
     if (!loadedConfig.slogan || loadedConfig.slogan.includes('Excelencia')) {
       loadedConfig.slogan = INITIAL_CONFIG.slogan;
     }
-    if (loadedConfig.activePresetId === 'atp-classic' || !loadedConfig.primaryColor) {
+    if (
+      loadedConfig.activePresetId === 'atp-classic' || 
+      loadedConfig.activePresetId === 'atp-venezuela' || 
+      loadedConfig.primaryColor === '#002B49' ||
+      !loadedConfig.primaryColor
+    ) {
       loadedConfig.primaryColor = INITIAL_CONFIG.primaryColor;
       loadedConfig.accentColor = INITIAL_CONFIG.accentColor;
       loadedConfig.secondaryColor = INITIAL_CONFIG.secondaryColor;
-      loadedConfig.activePresetId = 'atp-venezuela';
+      loadedConfig.activePresetId = 'atp-vivos';
     }
 
     let loadedDoctors = doctorsRaw ? (JSON.parse(doctorsRaw) as Doctor[]) : INITIAL_DOCTORS;

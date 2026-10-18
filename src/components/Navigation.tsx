@@ -1,16 +1,15 @@
 import React from 'react';
 import { 
   Calendar, 
-  UserCheck, 
   Users, 
   Stethoscope, 
   Tv, 
   BarChart3, 
   Palette, 
   PlusCircle,
-  Bell,
   FileText,
-  Share2
+  Share2,
+  CalendarPlus
 } from 'lucide-react';
 import { ClinicConfig } from '../types';
 
@@ -44,29 +43,77 @@ export const Navigation: React.FC<NavigationProps> = ({
   pendingIntakesCount
 }) => {
   const navItems = [
-    { id: 'tickets' as const, label: 'Creación de tickets', icon: PlusCircle },
-    { id: 'waitingRoom' as const, label: 'Pacientes en sala', icon: Tv, badge: pendingIntakesCount },
-    { id: 'appointments' as const, label: 'Citas y Agendamiento', icon: Calendar },
-    { id: 'medicalRecords' as const, label: 'Historias Médicas', icon: FileText },
-    { id: 'patients' as const, label: 'Directorio Pacientes', icon: Users },
-    { id: 'doctors' as const, label: 'Médicos & Box', icon: Stethoscope },
-    { id: 'reports' as const, label: 'Métricas', icon: BarChart3 },
-    { id: 'settings' as const, label: 'Ajuste Colores', icon: Palette },
+    { 
+      id: 'tickets' as const, 
+      label: 'Creación de Tickets', 
+      shortLabel: 'Tickets',
+      icon: PlusCircle,
+      accentColor: '#0ea5e9' // sky-500
+    },
+    { 
+      id: 'waitingRoom' as const, 
+      label: 'Pacientes en Sala', 
+      shortLabel: 'En Sala',
+      icon: Tv, 
+      badge: pendingIntakesCount,
+      accentColor: '#f59e0b' // amber-500
+    },
+    { 
+      id: 'appointments' as const, 
+      label: 'Citas y Agenda', 
+      shortLabel: 'Citas',
+      icon: Calendar,
+      accentColor: '#3b82f6' // blue-500
+    },
+    { 
+      id: 'medicalRecords' as const, 
+      label: 'Historias Médicas', 
+      shortLabel: 'Historias',
+      icon: FileText,
+      accentColor: '#8b5cf6' // violet-500
+    },
+    { 
+      id: 'patients' as const, 
+      label: 'Directorio Pacientes', 
+      shortLabel: 'Pacientes',
+      icon: Users,
+      accentColor: '#06b6d4' // cyan-500
+    },
+    { 
+      id: 'doctors' as const, 
+      label: 'Médicos & Box', 
+      shortLabel: 'Médicos',
+      icon: Stethoscope,
+      accentColor: '#10b981' // emerald-500
+    },
+    { 
+      id: 'reports' as const, 
+      label: 'Métricas & Reportes', 
+      shortLabel: 'Métricas',
+      icon: BarChart3,
+      accentColor: '#ec4899' // pink-500
+    },
+    { 
+      id: 'settings' as const, 
+      label: 'Ajuste de Colores', 
+      shortLabel: 'Colores',
+      icon: Palette,
+      accentColor: '#6366f1' // indigo-500
+    },
   ];
 
-
   return (
-    <header className="sticky top-0 z-30 bg-white border-b border-slate-200/80 shadow-xs">
-      {/* Top Bar following 3-Zone Contract */}
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b-2 border-slate-200 shadow-md">
+      {/* Upper Brand & Quick Actions Row */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between gap-6 h-16">
+        <div className="flex items-center justify-between gap-4 h-15 py-1">
           
-          {/* Zone 1: Brand Zone */}
+          {/* Brand Zone */}
           <div className="flex items-center gap-3 shrink-0">
             <div 
-              className="w-10 h-10 rounded-lg overflow-hidden border border-slate-200 flex items-center justify-center shadow-xs cursor-pointer"
+              className="w-10 h-10 rounded-xl overflow-hidden border-2 border-blue-500/30 flex items-center justify-center shadow-md cursor-pointer hover:scale-105 transition-transform bg-white"
               onClick={() => setActiveModule('appointments')}
-              title="ATP MEDICAL"
+              title="ATP MEDICAL - C.C. Parque Humboldt, Caracas"
             >
               <img 
                 src="/src/assets/images/atp_medical_badge_1792268353732.jpg" 
@@ -82,80 +129,49 @@ export const Navigation: React.FC<NavigationProps> = ({
               className="cursor-pointer"
               onClick={() => setActiveModule('appointments')}
             >
-              <div className="flex items-center gap-1.5">
-                <span className="text-lg font-bold tracking-tight text-slate-900 whitespace-nowrap">
+              <div className="flex items-center gap-2">
+                <span className="text-xl font-black tracking-tight text-slate-900 whitespace-nowrap">
                   {config.clinicName}
                 </span>
                 <span 
-                  className="w-2 h-2 rounded-full inline-block"
-                  style={{ backgroundColor: config.accentColor }}
+                  className="w-2.5 h-2.5 rounded-full inline-block shadow-sm animate-pulse"
+                  style={{ backgroundColor: config.accentColor || '#00A3FF' }}
                 />
               </div>
-              <p className="text-xs text-slate-500 whitespace-nowrap leading-none hidden sm:block">
+              <p className="text-[11px] font-semibold text-blue-800/80 whitespace-nowrap leading-none hidden sm:block">
                 {config.branchName}
               </p>
             </div>
           </div>
 
-          {/* Zone 2: Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-1 overflow-x-auto py-1">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeModule === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveModule(item.id)}
-                  className={`flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-md transition-all whitespace-nowrap shrink-0 ${
-                    isActive 
-                      ? 'text-white shadow-xs' 
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  }`}
-                  style={isActive ? { backgroundColor: config.primaryColor } : {}}
-                >
-                  <Icon className="w-3.5 h-3.5 shrink-0" />
-                  <span>{item.label}</span>
-                  {typeof item.badge === 'number' && item.badge > 0 && (
-                    <span 
-                      className="px-1.5 py-0.2 text-[10px] font-bold rounded-full text-white ml-0.5"
-                      style={{ backgroundColor: config.accentColor }}
-                    >
-                      {item.badge}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </nav>
-
-          {/* Zone 3: Primary Action & Quick Admission */}
+          {/* Quick Actions (WhatsApp Patient Link, New Appointment, Triage/Admission) */}
           <div className="flex items-center gap-2 shrink-0">
             {onSharePortalLink && (
               <button
                 type="button"
                 onClick={onSharePortalLink}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-md transition-colors whitespace-nowrap shrink-0"
-                title="Copiar o compartir enlace de autogestión de citas para enviar por WhatsApp a los pacientes"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 rounded-lg shadow-sm transition-all whitespace-nowrap active:scale-95"
+                title="Copiar o enviar por WhatsApp el enlace de autogestión de citas para pacientes"
               >
-                <Share2 className="w-3.5 h-3.5 text-emerald-600" />
-                <span className="hidden sm:inline">Link WhatsApp</span>
+                <Share2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Link Autogestión WhatsApp</span>
                 <span className="sm:hidden">WhatsApp</span>
               </button>
             )}
 
             <button
               onClick={onQuickAppointment}
-              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors whitespace-nowrap shrink-0"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-sky-800 bg-sky-50 hover:bg-sky-100 border border-sky-300 rounded-lg transition-colors whitespace-nowrap shadow-2xs"
               title="Agendar nueva cita médica"
             >
-              <Calendar className="w-3.5 h-3.5 text-slate-500" />
+              <CalendarPlus className="w-3.5 h-3.5 text-sky-600" />
               <span>Nueva Cita</span>
             </button>
 
             <button
               onClick={onQuickIntake}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white rounded-md shadow-xs hover:opacity-95 active:scale-98 transition-all whitespace-nowrap shrink-0"
-              style={{ backgroundColor: config.accentColor }}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white rounded-lg shadow-md hover:brightness-110 active:scale-95 transition-all whitespace-nowrap"
+              style={{ backgroundColor: config.primaryColor || '#0B5ED7' }}
               title="Registrar ingreso / admisión inmediata con triaje"
             >
               <PlusCircle className="w-3.5 h-3.5" />
@@ -164,9 +180,11 @@ export const Navigation: React.FC<NavigationProps> = ({
           </div>
 
         </div>
+      </div>
 
-        {/* Mobile/Tablet Secondary Nav Row */}
-        <div className="lg:hidden flex items-center gap-1 overflow-x-auto py-2 border-t border-slate-100 no-scrollbar">
+      {/* LOWER ROW: MODULES BAR - ALWAYS VISIBLE ON SCREEN! */}
+      <div className="bg-gradient-to-r from-slate-100/90 via-sky-50/50 to-slate-100/90 border-t border-slate-200/90 px-2 sm:px-4 py-1.5 overflow-x-auto no-scrollbar shadow-inner">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-1 sm:gap-2">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeModule === item.id;
@@ -174,17 +192,35 @@ export const Navigation: React.FC<NavigationProps> = ({
               <button
                 key={item.id}
                 onClick={() => setActiveModule(item.id)}
-                className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md whitespace-nowrap shrink-0 ${
+                className={`group flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                   isActive 
-                    ? 'text-white' 
-                    : 'text-slate-600 hover:bg-slate-100'
+                    ? 'text-white shadow-md scale-102 ring-2 ring-white/60' 
+                    : 'text-slate-700 hover:text-slate-900 hover:bg-white/90 border border-transparent hover:border-slate-300/80 shadow-2xs'
                 }`}
-                style={isActive ? { backgroundColor: config.primaryColor } : {}}
+                style={isActive ? { backgroundColor: config.primaryColor || '#0B5ED7' } : {}}
               >
-                <Icon className="w-3 h-3" />
-                <span>{item.label}</span>
+                <Icon 
+                  className={`w-4 h-4 transition-transform group-hover:scale-110 shrink-0 ${
+                    isActive ? 'text-white' : ''
+                  }`} 
+                  style={!isActive ? { color: item.accentColor } : {}}
+                />
+                
+                <span className="hidden md:inline font-bold">
+                  {item.label}
+                </span>
+                <span className="md:hidden font-bold">
+                  {item.shortLabel}
+                </span>
+
                 {typeof item.badge === 'number' && item.badge > 0 && (
-                  <span className="text-[10px] font-bold bg-white/30 text-white rounded px-1">
+                  <span 
+                    className={`px-1.5 py-0.2 text-[10px] font-black rounded-full ml-1 ${
+                      isActive 
+                        ? 'bg-white text-blue-700' 
+                        : 'bg-rose-500 text-white animate-pulse'
+                    }`}
+                  >
                     {item.badge}
                   </span>
                 )}
