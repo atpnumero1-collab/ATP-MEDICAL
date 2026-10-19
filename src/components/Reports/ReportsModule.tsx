@@ -149,21 +149,25 @@ export const ReportsModule: React.FC<ReportsModuleProps> = ({
   return (
     <div className="space-y-6">
       
-      {/* Top Header */}
-      <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <span>Reportes & Métricas Operativas</span>
-            <span 
-              className="text-xs font-semibold px-2 py-0.5 rounded text-white"
-              style={{ backgroundColor: config.primaryColor }}
-            >
-              ATP MEDICAL
-            </span>
-          </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Indicadores de flujo de pacientes, distribución de triaje y exportación analítica.
-          </p>
+      {/* Top Header - Vanguard Reports & Clinical Metrics */}
+      <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
+        <div className="flex items-start sm:items-center gap-3.5">
+          <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-pink-600 to-rose-600 text-white flex items-center justify-center shadow-md shrink-0">
+            <BarChart3 className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                Reportes & Métricas Clínicas
+              </h1>
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-pink-50 text-pink-700 border border-pink-200 font-mono">
+                Analítica Asistencial
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              Indicadores de flujo de pacientes, tasa de cumplimiento de citas, triaje clínico y exportación analítica.
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">

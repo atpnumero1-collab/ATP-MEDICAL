@@ -1,9 +1,10 @@
 import React from 'react';
 import { 
+  Home,
   Calendar, 
   Users, 
   Stethoscope, 
-  Tv, 
+  HeartPulse, 
   BarChart3, 
   Palette, 
   PlusCircle,
@@ -14,6 +15,7 @@ import {
 import { ClinicConfig } from '../types';
 
 export type ActiveModule = 
+  | 'home'
   | 'tickets'
   | 'waitingRoom'
   | 'appointments' 
@@ -44,6 +46,13 @@ export const Navigation: React.FC<NavigationProps> = ({
 }) => {
   const navItems = [
     { 
+      id: 'home' as const, 
+      label: 'Inicio', 
+      shortLabel: 'Inicio',
+      icon: Home,
+      accentColor: '#3b82f6' // blue-500
+    },
+    { 
       id: 'tickets' as const, 
       label: 'Creación de Tickets', 
       shortLabel: 'Tickets',
@@ -54,9 +63,9 @@ export const Navigation: React.FC<NavigationProps> = ({
       id: 'waitingRoom' as const, 
       label: 'Pacientes en Sala', 
       shortLabel: 'En Sala',
-      icon: Tv, 
+      icon: HeartPulse, 
       badge: pendingIntakesCount,
-      accentColor: '#f59e0b' // amber-500
+      accentColor: '#f43f5e' // rose-500
     },
     { 
       id: 'appointments' as const, 
@@ -112,7 +121,7 @@ export const Navigation: React.FC<NavigationProps> = ({
           <div className="flex items-center gap-3 shrink-0">
             <div 
               className="w-10 h-10 rounded-xl overflow-hidden border-2 border-blue-500/30 flex items-center justify-center shadow-md cursor-pointer hover:scale-105 transition-transform bg-white"
-              onClick={() => setActiveModule('appointments')}
+              onClick={() => setActiveModule('home')}
               title="ATP MEDICAL - C.C. Parque Humboldt, Caracas"
             >
               <img 
@@ -127,7 +136,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             </div>
             <div 
               className="cursor-pointer"
-              onClick={() => setActiveModule('appointments')}
+              onClick={() => setActiveModule('home')}
             >
               <div className="flex items-center gap-2">
                 <span className="text-xl font-black tracking-tight text-slate-900 whitespace-nowrap">

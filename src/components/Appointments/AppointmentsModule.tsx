@@ -8,6 +8,7 @@ import {
   ClinicConfig 
 } from '../../types';
 import { 
+  Calendar,
   Calendar as CalendarIcon, 
   Clock, 
   User, 
@@ -660,27 +661,25 @@ export const AppointmentsModule: React.FC<AppointmentsModuleProps> = ({
   return (
     <div className="space-y-6">
       
-      {/* Top Header & Clinic Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <span 
-              className="w-2.5 h-6 rounded-full inline-block"
-              style={{ backgroundColor: config.accentColor }}
-            />
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Citas y Agendamiento
-            </h1>
-            <span 
-              className="text-xs font-semibold px-2.5 py-0.5 rounded-md text-white"
-              style={{ backgroundColor: config.primaryColor }}
-            >
-              {config.clinicName} Caracas
-            </span>
+      {/* Top Header & Clinic Banner - Vanguard Medical Aesthetic */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-sm relative overflow-hidden">
+        <div className="flex items-start sm:items-center gap-3.5">
+          <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-md shrink-0">
+            <Calendar className="w-6 h-6" />
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Programación de consultas con validación estricta de días y horarios de atención en C.C. Parque Humboldt.
-          </p>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                Citas y Agendamiento
+              </h1>
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 font-mono">
+                Agenda Médica Oficial
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              Programación de consultas con validación estricta de días y horarios oficiales por especialista en C.C. Parque Humboldt.
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
@@ -691,8 +690,8 @@ export const AppointmentsModule: React.FC<AppointmentsModuleProps> = ({
               }
               setIsOpenNewModal(true);
             }}
-            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white rounded-lg shadow-xs hover:opacity-95 transition-all"
-            style={{ backgroundColor: config.accentColor }}
+            className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-white rounded-xl shadow-md hover:brightness-110 active:scale-95 transition-all cursor-pointer"
+            style={{ backgroundColor: config.primaryColor || '#0B5ED7' }}
           >
             <Plus className="w-4 h-4" />
             <span>+ Agendar Nueva Cita</span>

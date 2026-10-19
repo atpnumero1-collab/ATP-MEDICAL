@@ -86,28 +86,32 @@ export const DoctorsModule: React.FC<DoctorsModuleProps> = ({
   return (
     <div className="space-y-6">
       
-      {/* Top Banner */}
-      <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <span>Cuerpo Médico & Consultorios</span>
-            <span 
-              className="text-xs font-semibold px-2 py-0.5 rounded text-white"
-              style={{ backgroundColor: config.primaryColor }}
-            >
-              ATP MEDICAL
-            </span>
-          </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Especialistas clínicos, asignación de boxes de atención y control de disponibilidad en vivo.
-          </p>
+      {/* Top Banner - Vanguard Doctors & Medical Boxes */}
+      <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
+        <div className="flex items-start sm:items-center gap-3.5">
+          <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white flex items-center justify-center shadow-md shrink-0">
+            <Stethoscope className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                Cuerpo Médico & Consultorios
+              </h1>
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono">
+                Directorio Oficial ATP
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              Especialistas clínicos oficiales, asignación de boxes de atención en C.C. Parque Humboldt y disponibilidad en tiempo real.
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white rounded-lg shadow-xs hover:opacity-95"
-            style={{ backgroundColor: config.accentColor }}
+            className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold text-white rounded-xl shadow-md hover:brightness-110 active:scale-95 transition-all cursor-pointer"
+            style={{ backgroundColor: config.primaryColor || '#0B5ED7' }}
           >
             <UserPlus className="w-4 h-4" />
             <span>+ Agregar Especialista</span>

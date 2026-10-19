@@ -19,7 +19,8 @@ import {
   Banknote,
   Building,
   CheckCircle,
-  FileText
+  FileText,
+  HeartPulse
 } from 'lucide-react';
 import { getTodayDateString } from '../../data/initialData';
 
@@ -183,17 +184,22 @@ export const PacientesEnSalaModule: React.FC<PacientesEnSalaModuleProps> = ({
           </button>
         </div>
 
-        {/* Centered Title Lockup */}
+        {/* Centered Title Lockup with Medical Assistance Emblem */}
         <div className="text-center space-y-2 relative z-10 py-1">
           <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-slate-50 border border-slate-200 text-[10px] font-bold tracking-widest text-slate-600 uppercase font-mono">
             <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: config.accentColor }} />
-            <span>ATP MEDICAL VENEZUELA</span>
+            <span>ATP MEDICAL VENEZUELA · MONITOREO CLÍNICO ASISTENCIAL</span>
             <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: config.secondaryColor }} />
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 font-sans">
-            Pacientes en Sala
-          </h1>
+          <div className="flex items-center justify-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-rose-500 to-pink-600 text-white flex items-center justify-center shadow-md">
+              <HeartPulse className="w-5 h-5 animate-pulse" />
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 font-sans">
+              Pacientes en Sala
+            </h1>
+          </div>
 
           {/* Elegant decorative color bar */}
           <div className="flex items-center justify-center gap-1.5 pt-0.5">

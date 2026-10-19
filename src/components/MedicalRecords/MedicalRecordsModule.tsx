@@ -290,27 +290,25 @@ export const MedicalRecordsModule: React.FC<MedicalRecordsModuleProps> = ({
   return (
     <div className="space-y-6">
       
-      {/* Module Header */}
-      <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <span 
-              className="w-2.5 h-6 rounded-full inline-block"
-              style={{ backgroundColor: config.accentColor }}
-            />
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-              <span>Historias Médicas & Informes Clínicos</span>
-            </h1>
-            <span 
-              className="text-xs font-semibold px-2.5 py-0.5 rounded-md text-white"
-              style={{ backgroundColor: config.primaryColor }}
-            >
-              {config.clinicName}
-            </span>
+      {/* Module Header - Vanguard Medical Records & Clinical Reports */}
+      <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
+        <div className="flex items-start sm:items-center gap-3.5">
+          <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 text-white flex items-center justify-center shadow-md shrink-0">
+            <FileText className="w-6 h-6" />
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Gestión integral de expedientes clínicos por paciente, evolución médica e impresión oficial membretada en PDF.
-          </p>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                Historias Médicas & Informes Clínicos
+              </h1>
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-200 font-mono">
+                Expedientes Electrónicos
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              Gestión clínica integral por paciente, evolución diagnóstica CIE-10, prescripción e impresión oficial membretada en PDF.
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-2.5">

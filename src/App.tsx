@@ -51,6 +51,7 @@ import { ReportsModule } from './components/Reports/ReportsModule';
 import { SettingsModule } from './components/Settings/SettingsModule';
 import { MedicalRecordsModule } from './components/MedicalRecords/MedicalRecordsModule';
 import { PatientBookingPortal } from './components/SelfService/PatientBookingPortal';
+import { HomeWelcomeModule } from './components/Home/HomeWelcomeModule';
 import { 
   PlusCircle, 
   Calendar as CalendarIcon, 
@@ -74,7 +75,7 @@ import {
 export default function App() {
   const [initialLoaded, setInitialLoaded] = useState(false);
   const [cloudSynced, setCloudSynced] = useState(false);
-  const [activeModule, setActiveModule] = useState<ActiveModule>('tickets');
+  const [activeModule, setActiveModule] = useState<ActiveModule>('home');
 
   // Check if patient accessed via public self-service portal link (?portal=autogestion)
   const isDirectPatientUrl = typeof window !== 'undefined' && (
@@ -406,8 +407,27 @@ export default function App() {
         pendingIntakesCount={pendingIntakesCount}
       />
 
-      {/* Main Content Viewport */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* Main Content Viewport - Responsive across all device sizes */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 transition-all duration-200">
+        {/* Module 0: Pantalla de Bienvenida / Inicio con Carrete de Instagram @atpmedical_ve */}
+        {activeModule === 'home' && (
+          <HomeWelcomeModule
+            config={config}
+            doctors={doctors}
+            appointments={appointments}
+            intakes={intakes}
+            patients={patients}
+            medicalRecords={medicalRecords}
+            onNavigateTo={setActiveModule}
+            onQuickIntake={() => setActiveModule('tickets')}
+            onQuickAppointment={() => {
+              setActiveModule('appointments');
+              setIsNewAppointmentModalOpen(true);
+            }}
+            onSharePortalLink={() => setIsShareModalOpen(true)}
+          />
+        )}
+
         {/* Module 1: Creación de tickets */}
         {activeModule === 'tickets' && (
           <TicketCreationModule

@@ -168,27 +168,31 @@ export const PatientsModule: React.FC<PatientsModuleProps> = ({
   return (
     <div className="space-y-6">
       
-      {/* Header */}
-      <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <span>Directorio de Pacientes & Expedientes</span>
-            <span 
-              className="text-xs font-semibold px-2 py-0.5 rounded text-white"
-              style={{ backgroundColor: config.primaryColor }}
-            >
-              ATP MEDICAL
-            </span>
-          </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Fichas clínicas ambulatorias, antecedentes, alertas de alergias e historial de atenciones.
-          </p>
+      {/* Header - Vanguard Patient Directory */}
+      <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
+        <div className="flex items-start sm:items-center gap-3.5">
+          <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-cyan-600 to-teal-600 text-white flex items-center justify-center shadow-md shrink-0">
+            <Users className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                Directorio de Pacientes
+              </h1>
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-200 font-mono">
+                Padrón Maestro
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              Fichas clínicas ambulatorias, antecedentes, alertas de alergias e historial de atenciones en ATP Medical.
+            </p>
+          </div>
         </div>
 
         <button
           onClick={() => openFormModal()}
-          className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white rounded-lg shadow-xs hover:opacity-95 transition-all self-start md:self-center"
-          style={{ backgroundColor: config.accentColor }}
+          className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold text-white rounded-xl shadow-md hover:brightness-110 active:scale-95 transition-all self-start md:self-center cursor-pointer"
+          style={{ backgroundColor: config.primaryColor || '#0B5ED7' }}
         >
           <UserPlus className="w-4 h-4" />
           <span>+ Registrar Nuevo Paciente</span>
