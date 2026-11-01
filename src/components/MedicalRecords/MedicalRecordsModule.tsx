@@ -7,8 +7,29 @@ import {
   VitalSigns 
 } from '../../types';
 import { calculateBmi } from '../../data/initialData';
-import { buildMedicalRecordWhatsAppMessage, buildWhatsAppUrl } from '../../utils/whatsapp';
-import { downloadMedicalRecordPdf, sendMedicalRecordPdfViaWhatsApp } from '../../utils/pdfGenerator';
+import {
+  buildMedicalRecordWhatsAppMessage,
+  buildWhatsAppUrl,
+  buildWhatsAppWebUrl,
+  formatPhoneForWhatsApp,
+  sendWhatsAppMessageInApp
+} from '../../utils/whatsapp';
+import {
+  downloadMedicalRecordPdf,
+  sendMedicalRecordPdfViaWhatsApp,
+  getMedicalRecordPdfFilename,
+  getMedicalRecordPdfBase64,
+  buildMedicalRecordWhatsAppPdfText,
+  shareMedicalRecordPdfFileNative,
+  buildMedicalRecordEmailSubject,
+  buildMedicalRecordEmailBody
+} from '../../utils/pdfGenerator';
+import {
+  sendEmailViaGmailApi,
+  connectGmailAccount,
+  hasActiveGmailToken,
+  getConnectedGoogleEmail
+} from '../../firebase/firebase';
 import { OfficialAtpLogo } from '../OfficialLogo';
 import { 
   FileText, 
@@ -35,7 +56,10 @@ import {
   Building,
   ShieldAlert,
   Sparkles,
-  Download
+  Download,
+  Copy,
+  Check,
+  ExternalLink
 } from 'lucide-react';
 
 interface MedicalRecordsModuleProps {
@@ -46,6 +70,7 @@ interface MedicalRecordsModuleProps {
   onSaveRecord: (record: MedicalRecord) => Promise<void>;
   onDeleteRecord?: (recordId: string) => Promise<void>;
   onAddPatient?: (patient: Patient) => void;
+  onUpdateConfig?: (newConfig: ClinicConfig) => void;
 }
 
 export const MedicalRecordsModule: React.FC<MedicalRecordsModuleProps> = ({
@@ -55,7 +80,8 @@ export const MedicalRecordsModule: React.FC<MedicalRecordsModuleProps> = ({
   config,
   onSaveRecord,
   onDeleteRecord,
-  onAddPatient
+  onAddPatient,
+  onUpdateConfig
 }) => {
   // Search query for patient (Cédula, Nombre, Apellido)
   const [searchQuery, setSearchQuery] = useState('');
@@ -67,6 +93,42 @@ export const MedicalRecordsModule: React.FC<MedicalRecordsModuleProps> = ({
   const [isPrinting, setIsPrinting] = useState(false);
   const [savedSuccessToast, setSavedSuccessToast] = useState(false);
   const [savedConfirmRecord, setSavedConfirmRecord] = useState<MedicalRecord | null>(null);
+
+  // State for Internal WhatsApp & Email PDF Dispatch Modal (100% In-App)
+  const [dispatchRecord, setDispatchRecord] = useState<MedicalRecord | null>(null);
+  const [dispatchChannel, setDispatchChannel] = useState<'whatsapp' | 'email'>('whatsapp');
+  const [dispatchPhone, setDispatchPhone] = useState<string>('');
+  const [dispatchEmail, setDispatchEmail] = useState<string>('');
+  const [editableEmailSubject, setEditableEmailSubject] = useState<string>('');
+  const [editableEmailBody, setEditableEmailBody] = useState<string>('');
+  const [editableWhatsappText, setEditableWhatsappText] = useState<string>('');
+  const [copiedDispatchText, setCopiedDispatchText] = useState(false);
+
+  // In-App Sending & Confirmation State
+  const [confirmingEmailSend, setConfirmingEmailSend] = useState(false);
+  const [confirmingWhatsappSend, setConfirmingWhatsappSend] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [isSendingWhatsapp, setIsSendingWhatsapp] = useState(false);
+  const [emailSentSuccess, setEmailSentSuccess] = useState<{
+    messageId: string;
+    senderEmail: string;
+    recipient: string;
+    filename: string;
+  } | null>(null);
+  const [whatsappSentSuccess, setWhatsappSentSuccess] = useState<{
+    messageId: string;
+    recipient: string;
+    mode: 'cloud_api' | 'internal_dispatch';
+    timestamp: string;
+  } | null>(null);
+  const [dispatchError, setDispatchError] = useState<string | null>(null);
+  const [connectedGmail, setConnectedGmail] = useState<string>(
+    getConnectedGoogleEmail() || config.connectedGmailAccount || config.email || 'atpnumero1@gmail.com'
+  );
+  const [isConnectingGmail, setIsConnectingGmail] = useState(false);
+  const [showInternalConfigPanel, setShowInternalConfigPanel] = useState(false);
+  const [waPhoneIdInput, setWaPhoneIdInput] = useState<string>(config.whatsappPhoneNumberId || '');
+  const [waTokenInput, setWaTokenInput] = useState<string>(config.whatsappAccessToken || '');
 
   // New Record Form State
   const [formDoctorId, setFormDoctorId] = useState<string>(doctors[0]?.id || '');
@@ -266,30 +328,173 @@ export const MedicalRecordsModule: React.FC<MedicalRecordsModuleProps> = ({
     setNewEmail('');
   };
 
-  // Print PDF function
+  // Print PDF function — sets document.title to "nombre y apellido- fecha" so browser Save-as-PDF uses the exact requested filename
   const handlePrint = () => {
     setIsPrinting(true);
+    const originalTitle = document.title;
+    if (viewingRecord) {
+      document.title = getMedicalRecordPdfFilename(viewingRecord, false);
+    }
     setTimeout(() => {
       window.print();
       setIsPrinting(false);
+      setTimeout(() => {
+        document.title = originalTitle;
+      }, 500);
     }, 250);
   };
 
-  // WhatsApp share URL builder for the medical report summary (targets patient phone if available)
-  const getRecordWhatsAppUrl = (rec: MedicalRecord) => {
+  // Open Internal WhatsApp PDF dispatch modal & download the official PDF ("nombre y apellido- fecha.pdf")
+  const handleSendPdfViaWhatsApp = (rec: MedicalRecord) => {
     const patient = patients.find(p => p.id === rec.patientId || p.dni === rec.patientDni);
-    const message = buildMedicalRecordWhatsAppMessage(rec, config);
-    return buildWhatsAppUrl(message, patient?.phone || rec.patientPhone);
-  };
-
-  // Generate & download official PDF and open WhatsApp with the PDF link
-  const handleSendPdfViaWhatsApp = async (rec: MedicalRecord) => {
-    const patient = patients.find(p => p.id === rec.patientId || p.dni === rec.patientDni);
+    const phone = rec.patientPhone || patient?.phone || '';
+    const email = patient?.email || '';
     const recordWithPhone: MedicalRecord = {
       ...rec,
-      patientPhone: rec.patientPhone || patient?.phone || ''
+      patientPhone: phone
     };
-    await sendMedicalRecordPdfViaWhatsApp(recordWithPhone, config);
+    setDispatchRecord(recordWithPhone);
+    setDispatchChannel('whatsapp');
+    setDispatchPhone(phone);
+    setDispatchEmail(email);
+    setEditableEmailSubject(buildMedicalRecordEmailSubject(recordWithPhone, config));
+    setEditableEmailBody(buildMedicalRecordEmailBody(recordWithPhone, config));
+    setEditableWhatsappText(buildMedicalRecordWhatsAppPdfText(recordWithPhone, config));
+    setConfirmingEmailSend(false);
+    setConfirmingWhatsappSend(false);
+    setEmailSentSuccess(null);
+    setWhatsappSentSuccess(null);
+    setDispatchError(null);
+    setCopiedDispatchText(false);
+    // Download the PDF with format "nombre y apellido- fecha de creación del informe.pdf"
+    downloadMedicalRecordPdf(recordWithPhone, config);
+  };
+
+  // Open Internal Email PDF dispatch modal & download the official PDF ("nombre y apellido- fecha.pdf")
+  const handleSendPdfViaEmail = (rec: MedicalRecord) => {
+    const patient = patients.find(p => p.id === rec.patientId || p.dni === rec.patientDni);
+    const phone = rec.patientPhone || patient?.phone || '';
+    const email = patient?.email || '';
+    const recordWithPhone: MedicalRecord = {
+      ...rec,
+      patientPhone: phone
+    };
+    setDispatchRecord(recordWithPhone);
+    setDispatchChannel('email');
+    setDispatchPhone(phone);
+    setDispatchEmail(email);
+    setEditableEmailSubject(buildMedicalRecordEmailSubject(recordWithPhone, config));
+    setEditableEmailBody(buildMedicalRecordEmailBody(recordWithPhone, config));
+    setEditableWhatsappText(buildMedicalRecordWhatsAppPdfText(recordWithPhone, config));
+    setConfirmingEmailSend(false);
+    setConfirmingWhatsappSend(false);
+    setEmailSentSuccess(null);
+    setWhatsappSentSuccess(null);
+    setDispatchError(null);
+    setCopiedDispatchText(false);
+    // Download the PDF with format "nombre y apellido- fecha de creación del informe.pdf"
+    downloadMedicalRecordPdf(recordWithPhone, config);
+  };
+
+  // Connect / Authorize Gmail Account from inside the app
+  const handleConnectGmailInModal = async () => {
+    setDispatchError(null);
+    setIsConnectingGmail(true);
+    try {
+      const hint = config.connectedGmailAccount || config.email || 'atpnumero1@gmail.com';
+      const { email } = await connectGmailAccount(hint);
+      setConnectedGmail(email);
+      if (onUpdateConfig) {
+        onUpdateConfig({
+          ...config,
+          connectedGmailAccount: email
+        });
+      }
+    } catch (err: any) {
+      setDispatchError(err?.message || 'No se pudo autorizar el permiso de Gmail.');
+    } finally {
+      setIsConnectingGmail(false);
+    }
+  };
+
+  // Execute In-App Email Send via Gmail API with the PDF attached
+  const handleConfirmSendEmailInApp = async () => {
+    if (!dispatchRecord) return;
+    if (!dispatchEmail.trim()) {
+      setDispatchError('Por favor ingrese el correo electrónico del destinatario.');
+      return;
+    }
+    setDispatchError(null);
+    setIsSendingEmail(true);
+    try {
+      const { filename, base64Content } = getMedicalRecordPdfBase64(dispatchRecord, config);
+      const hint = connectedGmail || config.connectedGmailAccount || config.email || 'atpnumero1@gmail.com';
+      const result = await sendEmailViaGmailApi({
+        to: dispatchEmail.trim(),
+        subject: editableEmailSubject.trim() || buildMedicalRecordEmailSubject(dispatchRecord, config),
+        bodyText: editableEmailBody.trim() || buildMedicalRecordEmailBody(dispatchRecord, config),
+        fromName: config.clinicName || 'ATP MEDICAL',
+        loginHint: hint,
+        pdfAttachment: {
+          filename,
+          base64Content
+        }
+      });
+      setConnectedGmail(result.senderEmail);
+      setConfirmingEmailSend(false);
+      setEmailSentSuccess({
+        messageId: result.id,
+        senderEmail: result.senderEmail,
+        recipient: dispatchEmail.trim(),
+        filename
+      });
+    } catch (err: any) {
+      setDispatchError(
+        err?.message || 'Error al enviar el correo internamente. Verifique la autorización de su cuenta Gmail.'
+      );
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
+  // Execute In-App WhatsApp Send without leaving the app
+  const handleConfirmSendWhatsappInApp = async () => {
+    if (!dispatchRecord) return;
+    setDispatchError(null);
+    setIsSendingWhatsapp(true);
+    try {
+      const updatedConfig: ClinicConfig = {
+        ...config,
+        whatsappPhoneNumberId: waPhoneIdInput.trim() || config.whatsappPhoneNumberId,
+        whatsappAccessToken: waTokenInput.trim() || config.whatsappAccessToken
+      };
+      if (
+        onUpdateConfig &&
+        (waPhoneIdInput.trim() !== (config.whatsappPhoneNumberId || '') ||
+          waTokenInput.trim() !== (config.whatsappAccessToken || ''))
+      ) {
+        onUpdateConfig(updatedConfig);
+      }
+
+      const result = await sendWhatsAppMessageInApp({
+        recipientPhone: dispatchPhone,
+        messageText: editableWhatsappText.trim() || buildMedicalRecordWhatsAppPdfText(dispatchRecord, config),
+        config: updatedConfig,
+        pdfFilename: getMedicalRecordPdfFilename(dispatchRecord, true)
+      });
+
+      setConfirmingWhatsappSend(false);
+      setWhatsappSentSuccess({
+        messageId: result.messageId,
+        recipient: `+${result.normalizedPhone}`,
+        mode: result.mode,
+        timestamp: result.timestamp
+      });
+    } catch (err: any) {
+      setDispatchError(err?.message || 'Error al procesar el envío interno de WhatsApp.');
+    } finally {
+      setIsSendingWhatsapp(false);
+    }
   };
 
   return (
@@ -636,10 +841,20 @@ export const MedicalRecordsModule: React.FC<MedicalRecordsModuleProps> = ({
                               type="button"
                               onClick={() => handleSendPdfViaWhatsApp(rec)}
                               className="px-2.5 py-1 text-xs font-extrabold text-[#151E3A] bg-[#7DDACB] hover:brightness-105 rounded-lg border border-[#151E3A]/15 transition-all inline-flex items-center gap-1 cursor-pointer shadow-2xs"
-                              title="Generar archivo PDF y enviarlo por WhatsApp al paciente"
+                              title="Descargar PDF y enviar por WhatsApp al paciente"
                             >
                               <Share2 className="w-3.5 h-3.5 text-[#151E3A]" />
                               <span>Enviar PDF WhatsApp</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleSendPdfViaEmail(rec)}
+                              className="px-2.5 py-1 text-xs font-bold text-white bg-[#395AFF] hover:brightness-110 rounded-lg border border-[#151E3A]/15 transition-all inline-flex items-center gap-1 cursor-pointer shadow-2xs"
+                              title="Descargar PDF y enviar por Correo Electrónico al paciente"
+                            >
+                              <Mail className="w-3.5 h-3.5 text-[#7DDACB]" />
+                              <span>Enviar por Correo</span>
                             </button>
                           </div>
                         </div>
@@ -1036,7 +1251,17 @@ export const MedicalRecordsModule: React.FC<MedicalRecordsModuleProps> = ({
                   title="Enviar informe en PDF por WhatsApp al paciente"
                 >
                   <Share2 className="w-3.5 h-3.5 text-[#151E3A]" />
-                  <span>Enviar PDF por WhatsApp</span>
+                  <span>WhatsApp PDF</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleSendPdfViaEmail(viewingRecord)}
+                  className="px-3 py-1.5 rounded-lg bg-[#1F2952] hover:bg-[#395AFF] border border-[#7DDACB]/60 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer"
+                  title="Enviar informe en PDF por Correo Electrónico al paciente"
+                >
+                  <Mail className="w-3.5 h-3.5 text-[#7DDACB]" />
+                  <span>Enviar Correo</span>
                 </button>
 
                 <button
@@ -1064,15 +1289,12 @@ export const MedicalRecordsModule: React.FC<MedicalRecordsModuleProps> = ({
               <div className="bg-[#151E3A] text-white p-5 rounded-xl border-b-4 border-[#7DDACB] flex items-start justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <div 
-                    className="w-36 h-15 px-3 py-1.5 rounded-xl overflow-hidden border-2 border-[#7DDACB] flex items-center justify-center bg-[#F4F4F4] text-[#151E3A] font-black text-xl shadow-md shrink-0"
+                    className="w-44 h-15 px-3 py-1.5 rounded-xl overflow-hidden border-2 border-[#7DDACB] flex items-center justify-center bg-[#F4F4F4] text-[#151E3A] font-black text-xl shadow-md shrink-0"
                   >
                     <OfficialAtpLogo className="w-full h-full" />
                   </div>
                   <div>
-                    <h1 className="text-xl font-black text-white tracking-tight leading-tight">
-                      {config.clinicName.replace(/\bATP\b/gi, '').trim() || 'MEDICAL'}
-                    </h1>
-                    <p className="text-xs font-bold text-[#7DDACB] uppercase tracking-wide mt-0.5">
+                    <p className="text-xs font-bold text-[#7DDACB] uppercase tracking-wide">
                       {config.slogan}
                     </p>
                     <div className="text-[11px] text-[#F4F4F4] mt-1.5 space-y-0.5 leading-snug">
@@ -1352,6 +1574,13 @@ export const MedicalRecordsModule: React.FC<MedicalRecordsModuleProps> = ({
               </div>
 
               <div className="space-y-2">
+                <div className="p-2.5 rounded-xl bg-[#151E3A]/5 border border-[#151E3A]/15 text-[11px] text-[#151E3A] flex items-center justify-between">
+                  <span className="font-bold">Formato de archivo PDF:</span>
+                  <span className="font-mono font-extrabold text-[#395AFF]">
+                    {getMedicalRecordPdfFilename(savedConfirmRecord, true)}
+                  </span>
+                </div>
+
                 <button
                   type="button"
                   onClick={() => {
@@ -1363,6 +1592,19 @@ export const MedicalRecordsModule: React.FC<MedicalRecordsModuleProps> = ({
                 >
                   <Share2 className="w-4 h-4 text-[#151E3A]" />
                   <span>Enviar Informe en PDF por WhatsApp</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const rec = savedConfirmRecord;
+                    setSavedConfirmRecord(null);
+                    handleSendPdfViaEmail(rec);
+                  }}
+                  className="w-full py-2.5 px-4 rounded-xl bg-[#1F2952] hover:bg-[#395AFF] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+                >
+                  <Mail className="w-4 h-4 text-[#7DDACB]" />
+                  <span>Enviar Informe en PDF por Correo Electrónico</span>
                 </button>
 
                 <div className="grid grid-cols-2 gap-2">
@@ -1387,7 +1629,7 @@ export const MedicalRecordsModule: React.FC<MedicalRecordsModuleProps> = ({
                     className="py-2.5 px-3 rounded-xl bg-[#F4F4F4] hover:bg-slate-200 text-[#151E3A] font-bold text-xs flex items-center justify-center gap-1.5 border border-[#1F2952]/20 transition-all cursor-pointer"
                   >
                     <Printer className="w-4 h-4 text-[#151E3A]" />
-                    <span>Ver Informe</span>
+                    <span>Ver / Imprimir</span>
                   </button>
                 </div>
               </div>
@@ -1403,6 +1645,572 @@ export const MedicalRecordsModule: React.FC<MedicalRecordsModuleProps> = ({
           </div>
         </div>
       )}
+
+      {/* MODAL 2.8: Ventana Interna de Envío de Informe en PDF (Correo Electrónico & WhatsApp — 100% Dentro de la App) */}
+      {dispatchRecord && (() => {
+        const pdfFilename = getMedicalRecordPdfFilename(dispatchRecord, true);
+        const cleanPhone = formatPhoneForWhatsApp(dispatchPhone);
+        const isGmailReady = hasActiveGmailToken() || Boolean(getConnectedGoogleEmail());
+
+        return (
+          <div className="fixed inset-0 z-50 bg-[#151E3A]/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+            <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border-2 border-[#7DDACB] overflow-hidden my-auto animate-fadeIn">
+              {/* Header */}
+              <div className="bg-[#151E3A] p-4 sm:p-5 text-white border-b-4 border-[#7DDACB] flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#7DDACB] text-[#151E3A] flex items-center justify-center font-black shadow-md shrink-0">
+                    {dispatchChannel === 'whatsapp' ? (
+                      <Phone className="w-5 h-5" />
+                    ) : (
+                      <Mail className="w-5 h-5" />
+                    )}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-[#7DDACB]">
+                        Centro de Envío Interno ATP Medical
+                      </span>
+                      <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-[#395AFF] text-white">
+                        Sin salir de la App
+                      </span>
+                    </div>
+                    <h3 className="text-sm sm:text-base font-black text-white mt-0.5">
+                      {dispatchRecord.patientName} · Informe {dispatchRecord.date}
+                    </h3>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setDispatchRecord(null)}
+                  className="text-[#F4F4F4] hover:text-white p-1.5 rounded-lg cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Channel Selector Tabs (Correo Electrónico Interno / WhatsApp Interno) */}
+              <div className="grid grid-cols-2 bg-[#F4F4F4] p-1.5 border-b border-slate-200 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDispatchChannel('email');
+                    setDispatchError(null);
+                  }}
+                  className={`py-2.5 px-3 rounded-xl font-black text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                    dispatchChannel === 'email'
+                      ? 'bg-[#395AFF] text-white shadow-sm'
+                      : 'text-[#151E3A] hover:bg-white/60'
+                  }`}
+                >
+                  <Mail className="w-4 h-4" />
+                  <span>Correo Electrónico (Envío Interno)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDispatchChannel('whatsapp');
+                    setDispatchError(null);
+                  }}
+                  className={`py-2.5 px-3 rounded-xl font-black text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                    dispatchChannel === 'whatsapp'
+                      ? 'bg-[#151E3A] text-[#7DDACB] shadow-sm'
+                      : 'text-[#151E3A] hover:bg-white/60'
+                  }`}
+                >
+                  <Phone className="w-4 h-4" />
+                  <span>WhatsApp (Envío Interno)</span>
+                </button>
+              </div>
+
+              <div className="p-5 space-y-4 text-xs max-h-[80vh] overflow-y-auto">
+                {/* PDF Attachment Banner */}
+                <div className="p-3 rounded-xl bg-[#F4F4F4] border-l-4 border-[#7DDACB] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <span className="text-[10px] font-extrabold uppercase text-[#1F2952] block">
+                      📎 Archivo PDF Oficial Generado y Adjunto Automáticamente:
+                    </span>
+                    <span className="font-mono font-extrabold text-[#151E3A] text-xs break-all">
+                      {pdfFilename}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => downloadMedicalRecordPdf(dispatchRecord, config)}
+                    className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-[#395AFF] font-bold text-[11px] border border-[#1F2952]/15 flex items-center gap-1 shrink-0 cursor-pointer self-start sm:self-center"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Guardar Copia Local</span>
+                  </button>
+                </div>
+
+                {/* Error Message if any */}
+                {dispatchError && (
+                  <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 font-semibold flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                      <span>{dispatchError}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setDispatchError(null)}
+                      className="text-rose-500 hover:text-rose-800 font-bold"
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
+
+                {dispatchChannel === 'email' ? (
+                  <div className="space-y-3.5">
+                    {/* Associated Gmail Account Bar & Permission Info */}
+                    <div className="p-3.5 rounded-xl bg-[#151E3A] text-white border border-[#7DDACB]/40 space-y-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#7DDACB] block">
+                            Cuenta de Correo Asociada para Envío Interno
+                          </span>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="font-mono font-bold text-xs text-white">
+                              {connectedGmail}
+                            </span>
+                            <span
+                              className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
+                                isGmailReady
+                                  ? 'bg-[#7DDACB] text-[#151E3A]'
+                                  : 'bg-amber-400/20 text-amber-200 border border-amber-300/40'
+                              }`}
+                            >
+                              {isGmailReady ? '✓ Permiso Gmail Activo' : 'Requiere confirmar permiso al enviar'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={handleConnectGmailInModal}
+                          disabled={isConnectingGmail}
+                          className="px-3 py-1.5 rounded-lg bg-[#395AFF] hover:brightness-110 text-white font-bold text-[11px] flex items-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50"
+                        >
+                          <Mail className="w-3.5 h-3.5 text-[#7DDACB]" />
+                          <span>
+                            {isConnectingGmail
+                              ? 'Autorizando...'
+                              : isGmailReady
+                              ? 'Cambiar / Reconectar Cuenta'
+                              : 'Autorizar Permiso en mi Correo'}
+                          </span>
+                        </button>
+                      </div>
+
+                      <p className="text-[11px] text-[#F4F4F4]/85 leading-relaxed border-t border-white/10 pt-2">
+                        <b>¿Qué permiso usa tu correo?</b> Únicamente el permiso oficial de{' '}
+                        <span className="text-[#7DDACB] font-semibold">
+                          «Enviar correos electrónicos en tu nombre»
+                        </span>
+                        . Envía el mensaje con el archivo <b>{pdfFilename}</b> adjunto directamente desde esta ventana sin abrir otra pestaña.
+                      </p>
+                    </div>
+
+                    {/* Email Sent Confirmation Card inside the Modal */}
+                    {emailSentSuccess ? (
+                      <div className="p-4 rounded-xl bg-emerald-50 border-2 border-emerald-400 text-emerald-950 space-y-2 animate-fadeIn">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                            <CheckCircle2 className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 block">
+                              ¡Envío Interno Completado con Éxito!
+                            </span>
+                            <h4 className="font-black text-sm text-emerald-950">
+                              Correo y PDF enviados directamente desde la aplicación
+                            </h4>
+                          </div>
+                        </div>
+                        <div className="bg-white p-3 rounded-lg border border-emerald-200 text-[11px] space-y-1">
+                          <p>
+                            <b>Remitente asociado:</b> <span className="font-mono">{emailSentSuccess.senderEmail}</span>
+                          </p>
+                          <p>
+                            <b>Destinatario:</b> <span className="font-mono font-bold">{emailSentSuccess.recipient}</span>
+                          </p>
+                          <p>
+                            <b>Archivo PDF adjunto:</b> <span className="font-mono text-[#395AFF] font-bold">{emailSentSuccess.filename}</span>
+                          </p>
+                          <p className="text-[10px] text-slate-500">
+                            ID de transmisión Gmail: <span className="font-mono">{emailSentSuccess.messageId}</span>
+                          </p>
+                        </div>
+                        <div className="flex justify-end gap-2 pt-1">
+                          <button
+                            type="button"
+                            onClick={() => setEmailSentSuccess(null)}
+                            className="px-3 py-1.5 rounded-lg border border-emerald-300 bg-white hover:bg-emerald-100 text-emerald-900 font-bold text-xs cursor-pointer"
+                          >
+                            Enviar a otro correo
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDispatchRecord(null)}
+                            className="px-4 py-1.5 rounded-lg bg-[#151E3A] text-white font-bold text-xs cursor-pointer"
+                          >
+                            Finalizar y Cerrar
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Recipient Email Input */}
+                        <div>
+                          <label className="font-bold text-[#151E3A] block mb-1">
+                            Para (Correo Electrónico del Paciente o Médico Destinatario) *
+                          </label>
+                          <input
+                            type="email"
+                            placeholder="ejemplo@correo.com"
+                            value={dispatchEmail}
+                            onChange={(e) => setDispatchEmail(e.target.value)}
+                            className="w-full px-3 py-2 rounded-xl border border-[#1F2952]/30 text-[#151E3A] font-semibold text-xs focus:ring-2 focus:ring-[#395AFF] focus:outline-hidden"
+                          />
+                        </div>
+
+                        {/* Editable Subject */}
+                        <div>
+                          <label className="font-bold text-[#151E3A] block mb-1">
+                            Asunto del Correo:
+                          </label>
+                          <input
+                            type="text"
+                            value={editableEmailSubject}
+                            onChange={(e) => setEditableEmailSubject(e.target.value)}
+                            className="w-full px-3 py-2 rounded-xl border border-[#1F2952]/25 text-[#151E3A] font-semibold text-xs focus:ring-2 focus:ring-[#395AFF] focus:outline-hidden"
+                          />
+                        </div>
+
+                        {/* Editable Body inside the app */}
+                        <div>
+                          <label className="font-bold text-[#151E3A] block mb-1">
+                            Mensaje del Correo (Editable aquí mismo en la app):
+                          </label>
+                          <textarea
+                            rows={6}
+                            value={editableEmailBody}
+                            onChange={(e) => setEditableEmailBody(e.target.value)}
+                            className="w-full px-3 py-2 rounded-xl border border-[#1F2952]/25 text-[#151E3A] font-sans text-xs leading-relaxed focus:ring-2 focus:ring-[#395AFF] focus:outline-hidden"
+                          />
+                        </div>
+
+                        {/* Explicit Confirmation Step before calling Gmail API */}
+                        {confirmingEmailSend ? (
+                          <div className="p-4 rounded-xl bg-[#151E3A] text-white border-2 border-[#7DDACB] space-y-3 animate-fadeIn">
+                            <div className="flex items-start gap-2.5">
+                              <Mail className="w-5 h-5 text-[#7DDACB] shrink-0 mt-0.5" />
+                              <div>
+                                <span className="text-[10px] font-black uppercase tracking-wider text-[#7DDACB] block">
+                                  Confirmación de Envío Interno por Gmail
+                                </span>
+                                <p className="text-xs font-semibold mt-0.5">
+                                  ¿Confirmas enviar este correo con el archivo PDF adjunto (<b>{pdfFilename}</b>) a{' '}
+                                  <span className="text-[#7DDACB] underline">{dispatchEmail.trim()}</span> usando la cuenta asociada?
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                type="button"
+                                disabled={isSendingEmail}
+                                onClick={() => setConfirmingEmailSend(false)}
+                                className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs cursor-pointer"
+                              >
+                                Cancelar
+                              </button>
+                              <button
+                                type="button"
+                                disabled={isSendingEmail}
+                                onClick={handleConfirmSendEmailInApp}
+                                className="px-4 py-2 rounded-xl bg-[#7DDACB] hover:brightness-105 text-[#151E3A] font-black text-xs flex items-center gap-1.5 shadow-md cursor-pointer disabled:opacity-50"
+                              >
+                                <CheckCircle2 className="w-4 h-4" />
+                                <span>
+                                  {isSendingEmail
+                                    ? 'Enviando Correo y PDF...'
+                                    : 'Sí, Confirmar y Enviar Correo Ahora'}
+                                </span>
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!dispatchEmail.trim()) {
+                                setDispatchError('Por favor ingrese el correo electrónico del destinatario antes de enviar.');
+                                return;
+                              }
+                              setDispatchError(null);
+                              setConfirmingEmailSend(true);
+                            }}
+                            className="w-full py-3 px-4 rounded-xl bg-[#395AFF] hover:brightness-110 text-white font-black text-xs flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
+                          >
+                            <Mail className="w-4 h-4 text-[#7DDACB]" />
+                            <span>Enviar Correo con PDF Adjunto Internamente (Sin salir de la App)</span>
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-3.5">
+                    {/* Associated WhatsApp Bar & Optional Cloud API Configuration */}
+                    <div className="p-3.5 rounded-xl bg-[#151E3A] text-white border border-[#7DDACB]/40 space-y-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#7DDACB] block">
+                            WhatsApp Asociado a la Clínica (Envío Interno)
+                          </span>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="font-mono font-bold text-xs text-white">
+                              {config.phone || '+58 414-3651970'}
+                            </span>
+                            <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#7DDACB] text-[#151E3A]">
+                              {config.whatsappPhoneNumberId && config.whatsappAccessToken
+                                ? '✓ WhatsApp Cloud API Activo'
+                                : '✓ Ventana Interna Activa'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => setShowInternalConfigPanel(!showInternalConfigPanel)}
+                          className="px-3 py-1.5 rounded-lg bg-[#1F2952] hover:bg-[#395AFF] border border-[#7DDACB]/40 text-[#7DDACB] hover:text-white font-bold text-[11px] shrink-0 cursor-pointer"
+                        >
+                          {showInternalConfigPanel ? 'Ocultar Configuración API' : 'Configurar WhatsApp Business API'}
+                        </button>
+                      </div>
+
+                      {showInternalConfigPanel && (
+                        <div className="pt-2.5 mt-2 border-t border-white/15 space-y-2.5 text-[11px]">
+                          <p className="text-[#F4F4F4]/90 leading-relaxed">
+                            Para enviar mensajes de WhatsApp en segundo plano directamente desde los servidores de Meta sin intervención manual, puede ingresar las credenciales de <b>WhatsApp Business Cloud API</b> de su número asociado:
+                          </p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <div>
+                              <label className="text-[10px] text-[#7DDACB] font-bold block mb-0.5">
+                                Phone Number ID (Meta WhatsApp Business)
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="Ej. 105928374651928"
+                                value={waPhoneIdInput}
+                                onChange={(e) => setWaPhoneIdInput(e.target.value)}
+                                className="w-full px-2.5 py-1.5 rounded-lg bg-white text-[#151E3A] font-mono text-xs"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] text-[#7DDACB] font-bold block mb-0.5">
+                                Token Permanente (Meta Graph API)
+                              </label>
+                              <input
+                                type="password"
+                                placeholder="EAAGm0PX4ZCps..."
+                                value={waTokenInput}
+                                onChange={(e) => setWaTokenInput(e.target.value)}
+                                className="w-full px-2.5 py-1.5 rounded-lg bg-white text-[#151E3A] font-mono text-xs"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {whatsappSentSuccess ? (
+                      <div className="p-4 rounded-xl bg-emerald-50 border-2 border-emerald-400 text-emerald-950 space-y-2 animate-fadeIn">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                            <CheckCircle2 className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 block">
+                              ¡Despacho Interno de WhatsApp Completado!
+                            </span>
+                            <h4 className="font-black text-sm text-emerald-950">
+                              Informe PDF procesado y enviado internamente sin salir de la aplicación
+                            </h4>
+                          </div>
+                        </div>
+                        <div className="bg-white p-3 rounded-lg border border-emerald-200 text-[11px] space-y-1">
+                          <p>
+                            <b>Destinatario WhatsApp:</b>{' '}
+                            <span className="font-mono font-bold">{whatsappSentSuccess.recipient}</span>
+                          </p>
+                          <p>
+                            <b>Archivo PDF incluido:</b>{' '}
+                            <span className="font-mono text-[#395AFF] font-bold">{pdfFilename}</span>
+                          </p>
+                          <p>
+                            <b>Hora y Folio de Envío:</b>{' '}
+                            <span className="font-mono">
+                              {whatsappSentSuccess.timestamp} · {whatsappSentSuccess.messageId}
+                            </span>
+                          </p>
+                        </div>
+                        <div className="flex justify-end gap-2 pt-1">
+                          <button
+                            type="button"
+                            onClick={() => setWhatsappSentSuccess(null)}
+                            className="px-3 py-1.5 rounded-lg border border-emerald-300 bg-white hover:bg-emerald-100 text-emerald-900 font-bold text-xs cursor-pointer"
+                          >
+                            Enviar a otro número
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDispatchRecord(null)}
+                            className="px-4 py-1.5 rounded-lg bg-[#151E3A] text-white font-bold text-xs cursor-pointer"
+                          >
+                            Finalizar y Cerrar
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div>
+                          <label className="font-bold text-[#151E3A] block mb-1">
+                            Número de WhatsApp del Paciente (Venezuela +58 o internacional):
+                          </label>
+                          <input
+                            type="tel"
+                            placeholder="Ej. 0414-1234567 o +58 4141234567"
+                            value={dispatchPhone}
+                            onChange={(e) => setDispatchPhone(e.target.value)}
+                            className="w-full px-3 py-2 rounded-xl border border-[#1F2952]/30 text-[#151E3A] font-mono font-bold text-xs focus:ring-2 focus:ring-[#395AFF] focus:outline-hidden"
+                          />
+                          <span className="text-[10px] text-slate-500 mt-1 block">
+                            Número normalizado para envío interno: <b>+{cleanPhone || 'Ingrese los dígitos del número'}</b>
+                          </span>
+                        </div>
+
+                        <div>
+                          <label className="font-bold text-[#151E3A] block mb-1">
+                            Mensaje de WhatsApp con Enlace de Descarga PDF (Editable aquí en la app):
+                          </label>
+                          <textarea
+                            rows={6}
+                            value={editableWhatsappText}
+                            onChange={(e) => setEditableWhatsappText(e.target.value)}
+                            className="w-full px-3 py-2 rounded-xl border border-[#1F2952]/25 bg-[#ECFDF5]/50 text-[#151E3A] font-sans text-xs leading-relaxed focus:ring-2 focus:ring-[#395AFF] focus:outline-hidden"
+                          />
+                        </div>
+
+                        {confirmingWhatsappSend ? (
+                          <div className="p-4 rounded-xl bg-[#151E3A] text-white border-2 border-[#7DDACB] space-y-3 animate-fadeIn">
+                            <div className="flex items-start gap-2.5">
+                              <Phone className="w-5 h-5 text-[#7DDACB] shrink-0 mt-0.5" />
+                              <div>
+                                <span className="text-[10px] font-black uppercase tracking-wider text-[#7DDACB] block">
+                                  Confirmación de Envío Interno de WhatsApp
+                                </span>
+                                <p className="text-xs font-semibold mt-0.5">
+                                  ¿Confirmas enviar el informe en PDF (<b>{pdfFilename}</b>) por WhatsApp internamente al número{' '}
+                                  <span className="text-[#7DDACB] font-mono">+{cleanPhone}</span>?
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                type="button"
+                                disabled={isSendingWhatsapp}
+                                onClick={() => setConfirmingWhatsappSend(false)}
+                                className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs cursor-pointer"
+                              >
+                                Cancelar
+                              </button>
+                              <button
+                                type="button"
+                                disabled={isSendingWhatsapp}
+                                onClick={handleConfirmSendWhatsappInApp}
+                                className="px-4 py-2 rounded-xl bg-[#7DDACB] hover:brightness-105 text-[#151E3A] font-black text-xs flex items-center gap-1.5 shadow-md cursor-pointer disabled:opacity-50"
+                              >
+                                <CheckCircle2 className="w-4 h-4" />
+                                <span>
+                                  {isSendingWhatsapp
+                                    ? 'Enviando internamente...'
+                                    : 'Sí, Confirmar y Enviar Ahora'}
+                                </span>
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (!cleanPhone || cleanPhone.length < 10) {
+                                  setDispatchError('Por favor ingrese un número de teléfono WhatsApp válido antes de enviar.');
+                                  return;
+                                }
+                                setDispatchError(null);
+                                setConfirmingWhatsappSend(true);
+                              }}
+                              className="w-full py-3 px-4 rounded-xl bg-[#7DDACB] hover:brightness-105 text-[#151E3A] font-black text-xs flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
+                            >
+                              <Phone className="w-4 h-4 text-[#151E3A]" />
+                              <span>Enviar Informe en PDF por WhatsApp Internamente (Sin salir de la App)</span>
+                            </button>
+
+                            <div className="grid grid-cols-2 gap-2">
+                              <button
+                                type="button"
+                                onClick={() => shareMedicalRecordPdfFileNative(dispatchRecord, config)}
+                                className="py-2 px-3 rounded-xl bg-[#F4F4F4] hover:bg-slate-200 text-[#151E3A] font-bold text-[11px] border border-[#1F2952]/20 flex items-center justify-center gap-1.5 cursor-pointer"
+                              >
+                                <Share2 className="w-3.5 h-3.5 text-[#395AFF]" />
+                                <span>Compartir PDF Nativo</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(editableWhatsappText);
+                                  setCopiedDispatchText(true);
+                                  setTimeout(() => setCopiedDispatchText(false), 2500);
+                                }}
+                                className="py-2 px-3 rounded-xl bg-[#F4F4F4] hover:bg-slate-200 text-[#151E3A] font-bold text-[11px] border border-[#1F2952]/20 flex items-center justify-center gap-1.5 cursor-pointer"
+                              >
+                                {copiedDispatchText ? (
+                                  <>
+                                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                    <span className="text-emerald-700">¡Mensaje Copiado!</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy className="w-3.5 h-3.5 text-[#151E3A]" />
+                                    <span>Copiar Texto + Link PDF</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+
+                <div className="pt-2 border-t border-slate-100 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setDispatchRecord(null)}
+                    className="px-4 py-2 rounded-xl bg-[#151E3A] hover:bg-[#1F2952] text-white font-bold text-xs cursor-pointer"
+                  >
+                    Cerrar Ventana Interna
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* MODAL 3: Quick Patient Registration Modal */}
       {isQuickPatientModalOpen && (

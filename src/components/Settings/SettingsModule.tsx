@@ -4,6 +4,12 @@ import { COLOR_PRESETS } from '../../data/initialData';
 import { chimePlayer } from '../../utils/audioChime';
 import { resetAllToInitial, exportFullBackup } from '../../utils/storage';
 import { OfficialAtpLogo } from '../OfficialLogo';
+import {
+  connectGmailAccount,
+  disconnectGmailAccount,
+  hasActiveGmailToken,
+  getConnectedGoogleEmail
+} from '../../firebase/firebase';
 import { 
   Palette, 
   Building2, 
@@ -32,6 +38,36 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
 }) => {
   const [localConfig, setLocalConfig] = useState<ClinicConfig>({ ...config });
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [gmailAuthEmail, setGmailAuthEmail] = useState<string>(
+    getConnectedGoogleEmail() || config.connectedGmailAccount || config.email || 'atpnumero1@gmail.com'
+  );
+  const [isConnectingGmail, setIsConnectingGmail] = useState(false);
+  const [gmailStatusMsg, setGmailStatusMsg] = useState<string | null>(null);
+
+  const handleConnectGmail = async () => {
+    setIsConnectingGmail(true);
+    setGmailStatusMsg(null);
+    try {
+      const { email } = await connectGmailAccount(localConfig.connectedGmailAccount || localConfig.email || 'atpnumero1@gmail.com');
+      setGmailAuthEmail(email);
+      const updated = {
+        ...localConfig,
+        connectedGmailAccount: email
+      };
+      setLocalConfig(updated);
+      onUpdateConfig(updated);
+      setGmailStatusMsg(`¡Cuenta ${email} vinculada con permiso de envío interno de Gmail!`);
+    } catch (err: any) {
+      setGmailStatusMsg(err?.message || 'No se completó la autorización del correo.');
+    } finally {
+      setIsConnectingGmail(false);
+    }
+  };
+
+  const handleDisconnectGmail = async () => {
+    await disconnectGmailAccount();
+    setGmailStatusMsg('Sesión de envío directo cerrada.');
+  };
 
   // Apply a preset
   const handleSelectPreset = (preset: typeof COLOR_PRESETS[0]) => {
@@ -98,18 +134,18 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
       <div className="bg-white p-4 sm:p-5 rounded-2xl border border-[#1F2952]/15 shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
           <div className="flex items-center gap-4">
-            <div className="w-40 h-16 px-3 py-1.5 rounded-xl overflow-hidden border-2 border-[#7DDACB] bg-[#F4F4F4] flex items-center justify-center shadow-sm shrink-0">
+            <div className="w-48 h-16 px-3 py-1.5 rounded-xl overflow-hidden border-2 border-[#7DDACB] bg-[#F4F4F4] flex items-center justify-center shadow-sm shrink-0">
               <OfficialAtpLogo className="w-full h-full" />
             </div>
             <div>
               <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded bg-[#151E3A] text-[#7DDACB] inline-block mb-1">
-                SIGLAS OFICIALES ACTIVAS
+                LOGO OFICIAL ACTIVO
               </span>
               <h3 className="text-sm font-black text-[#151E3A]">
-                Siglas e Identidad Gráfica Oficial MEDICAL
+                Logo e Identidad Gráfica Oficial ATP MEDICAL
               </h3>
               <p className="text-xs text-[#1F2952]/80">
-                Siglas oficiales integradas en barra principal, portal de pacientes, tickets e informes médicos en PDF.
+                Logo oficial integrado en barra principal, portal de pacientes, tickets e informes médicos en PDF.
               </p>
             </div>
           </div>
@@ -428,6 +464,160 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
               </button>
             </div>
 
+          </div>
+
+          {/* Configuración de Envío Interno: Correo Asociado (Gmail) & WhatsApp */}
+          <div className="bg-white p-5 rounded-xl border-2 border-[#7DDACB] shadow-xs space-y-4 text-xs">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <Mail className="w-4 h-4 text-[#395AFF]" />
+                <div>
+                  <h2 className="text-sm font-black text-[#151E3A]">
+                    Envío Interno de Correo & WhatsApp (Sin salir de la App)
+                  </h2>
+                  <p className="text-[11px] text-slate-500">
+                    Vincule el correo oficial de la cuenta y configure el despacho directo de informes en PDF.
+                  </p>
+                </div>
+              </div>
+              <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-[#151E3A] text-[#7DDACB]">
+                INTERNO
+              </span>
+            </div>
+
+            {/* 1. Gmail Associated Account Configuration */}
+            <div className="p-3.5 rounded-xl bg-[#151E3A] text-white space-y-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#7DDACB] block">
+                    1. Cuenta de Correo Gmail Asociada
+                  </span>
+                  <span className="font-mono font-bold text-xs text-white">
+                    {gmailAuthEmail}
+                  </span>
+                </div>
+                <span
+                  className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
+                    hasActiveGmailToken() || getConnectedGoogleEmail()
+                      ? 'bg-[#7DDACB] text-[#151E3A]'
+                      : 'bg-white/15 text-[#7DDACB]'
+                  }`}
+                >
+                  {hasActiveGmailToken() || getConnectedGoogleEmail()
+                    ? '✓ Permiso Activo'
+                    : 'Listo para vincular'}
+                </span>
+              </div>
+
+              <div>
+                <label className="block text-[11px] text-[#7DDACB] font-semibold mb-1">
+                  Correo Gmail predeterminado para envío de informes PDF:
+                </label>
+                <input
+                  type="email"
+                  value={localConfig.connectedGmailAccount || localConfig.email}
+                  onChange={(e) =>
+                    setLocalConfig({
+                      ...localConfig,
+                      connectedGmailAccount: e.target.value,
+                      email: e.target.value
+                    })
+                  }
+                  placeholder="atpnumero1@gmail.com"
+                  className="w-full px-3 py-1.5 rounded-lg bg-white text-[#151E3A] font-mono font-bold text-xs"
+                />
+              </div>
+
+              <div className="p-2.5 rounded-lg bg-[#1F2952] border border-[#7DDACB]/30 text-[11px] text-[#F4F4F4]/90 leading-relaxed">
+                <b className="text-[#7DDACB]">¿Qué permiso debes dar en tu correo?</b> Al pulsar{' '}
+                <b>«Autorizar Correo Gmail Asociado»</b>, Google te pedirá confirmar únicamente el permiso{' '}
+                <span className="underline font-semibold text-white">
+                  «Enviar correos electrónicos en tu nombre»
+                </span>
+                . Con esto la app adjunta y envía el informe PDF desde adentro sin redirigirte a otra página.
+              </div>
+
+              {gmailStatusMsg && (
+                <div className="p-2 rounded-lg bg-[#7DDACB]/20 border border-[#7DDACB] text-[#7DDACB] font-bold text-[11px]">
+                  {gmailStatusMsg}
+                </div>
+              )}
+
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={handleConnectGmail}
+                  disabled={isConnectingGmail}
+                  className="flex-1 py-2 px-3 rounded-lg bg-[#395AFF] hover:brightness-110 text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50"
+                >
+                  <Mail className="w-3.5 h-3.5 text-[#7DDACB]" />
+                  <span>
+                    {isConnectingGmail
+                      ? 'Autorizando...'
+                      : 'Autorizar Correo Gmail Asociado'}
+                  </span>
+                </button>
+                {(hasActiveGmailToken() || getConnectedGoogleEmail()) && (
+                  <button
+                    type="button"
+                    onClick={handleDisconnectGmail}
+                    className="py-2 px-3 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold text-xs cursor-pointer"
+                  >
+                    Desvincular
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* 2. WhatsApp Internal Configuration */}
+            <div className="p-3.5 rounded-xl bg-[#F4F4F4] border border-[#1F2952]/15 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#151E3A] flex items-center gap-1.5">
+                  <Phone className="w-3.5 h-3.5 text-[#395AFF]" />
+                  <span>2. Configuración de WhatsApp Interno (WhatsApp Business API)</span>
+                </span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#7DDACB] text-[#151E3A]">
+                  Ventana Interna Activa
+                </span>
+              </div>
+
+              <p className="text-[11px] text-[#1F2952]/85 leading-relaxed">
+                La ventana de WhatsApp ahora funciona 100% dentro de la aplicación. Si además cuenta con credenciales de{' '}
+                <b>Meta WhatsApp Business Cloud API</b>, ingréselas aquí para despacho directo en la nube:
+              </p>
+
+              <div className="space-y-2">
+                <div>
+                  <label className="block text-[11px] font-bold text-[#151E3A] mb-0.5">
+                    Phone Number ID (Identificador de Número WhatsApp Business)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Opcional: Ej. 105928374651928"
+                    value={localConfig.whatsappPhoneNumberId || ''}
+                    onChange={(e) =>
+                      setLocalConfig({ ...localConfig, whatsappPhoneNumberId: e.target.value })
+                    }
+                    className="w-full px-3 py-1.5 border border-slate-300 rounded-lg bg-white text-[#151E3A] font-mono text-xs"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-[#151E3A] mb-0.5">
+                    Token de Acceso Permanente (Meta Graph API)
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="Opcional: EAAGm0PX4ZCps..."
+                    value={localConfig.whatsappAccessToken || ''}
+                    onChange={(e) =>
+                      setLocalConfig({ ...localConfig, whatsappAccessToken: e.target.value })
+                    }
+                    className="w-full px-3 py-1.5 border border-slate-300 rounded-lg bg-white text-[#151E3A] font-mono text-xs"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Backup & System Reset */}

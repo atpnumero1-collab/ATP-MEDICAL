@@ -161,7 +161,7 @@ export const HomeWelcomeModule: React.FC<HomeWelcomeModuleProps> = ({
         <div className="relative z-10 p-5 sm:p-8 lg:p-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-3 max-w-2xl">
             <div className="flex flex-wrap items-center gap-3">
-              <div className="w-36 h-15 px-3 py-1.5 rounded-xl overflow-hidden border-2 border-[#7DDACB] bg-[#F4F4F4] flex items-center justify-center shadow-lg shrink-0">
+              <div className="w-44 h-14 px-3 py-1.5 rounded-xl overflow-hidden border-2 border-[#7DDACB] bg-[#F4F4F4] flex items-center justify-center shadow-lg shrink-0">
                 <OfficialAtpLogo className="w-full h-full" />
               </div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1F2952]/90 backdrop-blur-md border border-[#7DDACB]/60 text-white text-xs font-bold tracking-wide">
@@ -238,7 +238,7 @@ export const HomeWelcomeModule: React.FC<HomeWelcomeModuleProps> = ({
         {/* Instagram Header Bar */}
         <div className="p-3 sm:p-4 bg-slate-50 border-b border-slate-200/80 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-22 h-10 rounded-lg p-0.5 bg-gradient-to-tr from-[#151E3A] via-[#395AFF] to-[#7DDACB] shadow-sm shrink-0 overflow-hidden">
+            <div className="w-28 h-10 rounded-lg p-0.5 bg-gradient-to-tr from-[#151E3A] via-[#395AFF] to-[#7DDACB] shadow-sm shrink-0 overflow-hidden">
               <div className="w-full h-full px-1.5 py-0.5 rounded-md overflow-hidden bg-[#F4F4F4] flex items-center justify-center">
                 <OfficialAtpLogo className="w-full h-full" />
               </div>

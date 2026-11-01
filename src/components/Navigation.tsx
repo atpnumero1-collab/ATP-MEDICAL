@@ -121,7 +121,7 @@ export const Navigation: React.FC<NavigationProps> = ({
           {/* Brand Zone with High-Resolution Vector Official Siglas */}
           <div className="flex items-center shrink-0">
             <div 
-              className="w-32 sm:w-36 h-12 px-2.5 py-1 rounded-xl overflow-hidden border-2 border-[#7DDACB] flex items-center justify-center shadow-md cursor-pointer hover:brightness-105 transition-all bg-[#F4F4F4] shrink-0"
+              className="w-36 sm:w-44 h-12 px-2.5 py-1 rounded-xl overflow-hidden border-2 border-[#7DDACB] flex items-center justify-center shadow-md cursor-pointer hover:brightness-105 transition-all bg-[#F4F4F4] shrink-0"
               onClick={() => setActiveModule('home')}
               title="Inicio · C.C. Parque Humboldt, Caracas"
             >

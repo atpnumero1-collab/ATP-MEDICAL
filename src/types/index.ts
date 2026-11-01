@@ -144,6 +144,9 @@ export interface ClinicConfig {
   secondaryColor: string; // Default #059669
   enableAudioChime: boolean;
   activePresetId: string;
+  connectedGmailAccount?: string;
+  whatsappPhoneNumberId?: string;
+  whatsappAccessToken?: string;
 }
 
 export interface MedicalRecord {

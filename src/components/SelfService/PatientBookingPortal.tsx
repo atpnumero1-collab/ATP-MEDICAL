@@ -308,7 +308,7 @@ export const PatientBookingPortal: React.FC<PatientBookingPortalProps> = ({
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div 
-              className="w-32 sm:w-36 h-12 px-2.5 py-1 rounded-xl overflow-hidden border-2 border-[#7DDACB] flex items-center justify-center bg-[#F4F4F4] text-[#151E3A] font-black text-lg shadow-sm shrink-0"
+              className="w-36 sm:w-44 h-12 px-2.5 py-1 rounded-xl overflow-hidden border-2 border-[#7DDACB] flex items-center justify-center bg-[#F4F4F4] text-[#151E3A] font-black text-lg shadow-sm shrink-0"
             >
               <OfficialAtpLogo className="w-full h-full" />
             </div>
@@ -913,7 +913,7 @@ export const PatientBookingPortal: React.FC<PatientBookingPortalProps> = ({
                 style={{ backgroundColor: config.primaryColor }}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-24 h-10 px-2 py-1 rounded-lg overflow-hidden border border-[#7DDACB] bg-[#F4F4F4] flex items-center justify-center shrink-0">
+                  <div className="w-32 h-10 px-2 py-1 rounded-lg overflow-hidden border border-[#7DDACB] bg-[#F4F4F4] flex items-center justify-center shrink-0">
                     <OfficialAtpLogo className="w-full h-full" />
                   </div>
                   <div>
@@ -1076,12 +1076,12 @@ export const PatientBookingPortal: React.FC<PatientBookingPortalProps> = ({
 
       {/* Footer */}
       <footer className="mt-auto border-t border-slate-200/80 bg-white py-4 text-xs text-slate-500 text-center">
-        <div className="flex items-center justify-center gap-2 mb-1">
-          <div className="w-18 h-7 px-1.5 py-0.5 rounded overflow-hidden border border-[#7DDACB] bg-[#F4F4F4] inline-flex items-center justify-center">
+        <div className="flex items-center justify-center gap-2.5 mb-1">
+          <div className="w-28 h-8 px-2 py-0.5 rounded overflow-hidden border border-[#7DDACB] bg-[#F4F4F4] inline-flex items-center justify-center">
             <OfficialAtpLogo className="w-full h-full" />
           </div>
           <span className="font-semibold text-slate-700">
-            {config.clinicName.replace(/\bATP\b/gi, '').trim() || 'MEDICAL'} · {config.slogan}
+            {config.slogan}
           </span>
         </div>
         <p className="text-[11px] text-slate-400 mt-0.5">

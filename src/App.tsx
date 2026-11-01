@@ -25,9 +25,10 @@ import {
   getPublicPortalUrl,
   buildPortalInviteMessage,
   buildWhatsAppUrl,
-  formatPhoneForWhatsApp
+  formatPhoneForWhatsApp,
+  sendWhatsAppMessageInApp
 } from './utils/whatsapp';
-import { testConnection } from './firebase/firebase';
+import { testConnection, sendEmailViaGmailApi } from './firebase/firebase';
 import {
   seedInitialFirestoreData,
   subscribeDoctors,
@@ -100,12 +101,17 @@ export default function App() {
   // Staff preview mode for testing portal from within admin
   const [isStaffPortalPreview, setIsStaffPortalPreview] = useState(false);
 
-  // Modal for sharing portal link via WhatsApp
+  // Modal for sharing portal link internally via WhatsApp or Email
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedFullMessage, setCopiedFullMessage] = useState(false);
   const [shareRecipientPhone, setShareRecipientPhone] = useState('');
+  const [shareRecipientEmail, setShareRecipientEmail] = useState('');
   const [shareRecipientName, setShareRecipientName] = useState('');
+  const [shareChannel, setShareChannel] = useState<'whatsapp' | 'email'>('whatsapp');
+  const [isSendingShareInternal, setIsSendingShareInternal] = useState(false);
+  const [shareInternalSuccess, setShareInternalSuccess] = useState<string | null>(null);
+  const [shareInternalError, setShareInternalError] = useState<string | null>(null);
 
   // Main state initialized with local storage cache for instant offline responsiveness
   const [config, setConfig] = useState<ClinicConfig>(() => loadStoredData().config);
@@ -408,7 +414,7 @@ export default function App() {
         <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border-2 border-[#7DDACB] overflow-hidden">
           <div className="bg-[#151E3A] p-5 text-white border-b-4 border-[#7DDACB] flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-28 h-12 px-2 py-1 rounded-xl bg-[#F4F4F4] border border-[#7DDACB] flex items-center justify-center shrink-0">
+              <div className="w-36 h-12 px-2.5 py-1 rounded-xl bg-[#F4F4F4] border border-[#7DDACB] flex items-center justify-center shrink-0">
                 <OfficialAtpLogo className="w-full h-full" />
               </div>
               <div>
@@ -497,7 +503,7 @@ export default function App() {
                   onClick={() => downloadMedicalRecordPdf(sharedRecord, config)}
                   className="w-full sm:w-auto px-6 py-3 rounded-xl bg-[#395AFF] hover:brightness-110 text-white font-black text-xs flex items-center justify-center gap-2 shadow-md cursor-pointer"
                 >
-                  <span>📥 Descargar Informe Médico en PDF ({sharedRecord.recordNumber}.pdf)</span>
+                  <span>📥 Descargar Informe Médico en PDF ({sharedRecord.patientName}- {sharedRecord.date}.pdf)</span>
                 </button>
               </div>
             </div>
@@ -599,6 +605,7 @@ export default function App() {
             onSaveRecord={handleSaveMedicalRecord}
             onDeleteRecord={handleDeleteMedicalRecord}
             onAddPatient={handleAddPatient}
+            onUpdateConfig={handleUpdateConfig}
           />
         )}
 
@@ -649,7 +656,7 @@ export default function App() {
         )}
       </main>
 
-      {/* Modal: Share Self-Service Link for WhatsApp */}
+      {/* Modal: Share Self-Service Link Internally (WhatsApp & Correo Electrónico) */}
       {isShareModalOpen && (
         <div className="fixed inset-0 z-50 bg-[#151E3A]/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-[#1F2952]/20 overflow-hidden my-auto">
@@ -660,43 +667,123 @@ export default function App() {
                 <Share2 className="w-5 h-5 text-[#7DDACB]" />
                 <div>
                   <h3 className="font-bold text-sm sm:text-base">
-                    Envío de Enlace de Autogestión por WhatsApp
+                    Envío Interno de Enlace de Autogestión (WhatsApp & Correo)
                   </h3>
                   <p className="text-[11px] text-[#7DDACB]">
-                    Envíe el portal oficial a un número específico o a cualquier contacto
+                    Envíe el portal oficial desde adentro de la app sin abrir pestañas externas
                   </p>
                 </div>
               </div>
 
               <button
                 type="button"
-                onClick={() => setIsShareModalOpen(false)}
+                onClick={() => {
+                  setIsShareModalOpen(false);
+                  setShareInternalSuccess(null);
+                  setShareInternalError(null);
+                }}
                 className="text-white hover:bg-white/10 p-1.5 rounded-lg transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
+            {/* Channel Tabs */}
+            <div className="grid grid-cols-2 bg-[#F4F4F4] p-1.5 border-b border-slate-200 gap-1.5 text-xs">
+              <button
+                type="button"
+                onClick={() => {
+                  setShareChannel('whatsapp');
+                  setShareInternalSuccess(null);
+                  setShareInternalError(null);
+                }}
+                className={`py-2 px-3 rounded-xl font-black flex items-center justify-center gap-1.5 cursor-pointer ${
+                  shareChannel === 'whatsapp'
+                    ? 'bg-[#151E3A] text-[#7DDACB] shadow-xs'
+                    : 'text-[#151E3A] hover:bg-white/60'
+                }`}
+              >
+                <Phone className="w-3.5 h-3.5" />
+                <span>WhatsApp Interno</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShareChannel('email');
+                  setShareInternalSuccess(null);
+                  setShareInternalError(null);
+                }}
+                className={`py-2 px-3 rounded-xl font-black flex items-center justify-center gap-1.5 cursor-pointer ${
+                  shareChannel === 'email'
+                    ? 'bg-[#395AFF] text-white shadow-xs'
+                    : 'text-[#151E3A] hover:bg-white/60'
+                }`}
+              >
+                <Mail className="w-3.5 h-3.5" />
+                <span>Correo Gmail Interno</span>
+              </button>
+            </div>
+
             <div className="p-5 sm:p-6 space-y-4 text-xs">
-              {/* Optional Direct Recipient Inputs */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200/90">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">
-                    Teléfono WhatsApp (Opcional)
-                  </label>
-                  <input
-                    type="tel"
-                    value={shareRecipientPhone}
-                    onChange={(e) => setShareRecipientPhone(e.target.value)}
-                    placeholder="Ej: 0414-1234567"
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-900 font-mono text-xs focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
-                  />
-                  <span className="text-[10px] text-slate-500 mt-1 block">
-                    {shareRecipientPhone.trim()
-                      ? `Se enviará directo a: +${formatPhoneForWhatsApp(shareRecipientPhone)}`
-                      : 'Si lo deja vacío, elegirá el contacto en WhatsApp'}
-                  </span>
+              {shareInternalSuccess && (
+                <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900 font-bold flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>{shareInternalSuccess}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShareInternalSuccess(null)}
+                    className="text-emerald-700 font-bold"
+                  >
+                    ×
+                  </button>
                 </div>
+              )}
+
+              {shareInternalError && (
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 font-semibold">
+                  {shareInternalError}
+                </div>
+              )}
+
+              {/* Direct Recipient Inputs */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200/90">
+                {shareChannel === 'whatsapp' ? (
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      Teléfono WhatsApp del Paciente *
+                    </label>
+                    <input
+                      type="tel"
+                      value={shareRecipientPhone}
+                      onChange={(e) => setShareRecipientPhone(e.target.value)}
+                      placeholder="Ej: 0414-1234567"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-900 font-mono text-xs focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                    />
+                    <span className="text-[10px] text-slate-500 mt-1 block">
+                      {shareRecipientPhone.trim()
+                        ? `Envío interno directo a: +${formatPhoneForWhatsApp(shareRecipientPhone)}`
+                        : 'Ingrese el número del paciente'}
+                    </span>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      Correo Electrónico del Paciente *
+                    </label>
+                    <input
+                      type="email"
+                      value={shareRecipientEmail}
+                      onChange={(e) => setShareRecipientEmail(e.target.value)}
+                      placeholder="paciente@correo.com"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-900 text-xs focus:outline-hidden focus:ring-2 focus:ring-[#395AFF]"
+                    />
+                    <span className="text-[10px] text-slate-500 mt-1 block">
+                      Se enviará desde la cuenta Gmail asociada ({config.connectedGmailAccount || config.email})
+                    </span>
+                  </div>
+                )}
 
                 <div>
                   <label className="block font-bold text-slate-700 mb-1">
@@ -744,7 +831,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Live WhatsApp Message Preview */}
+              {/* Live Message Preview */}
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="font-bold text-slate-700 flex items-center gap-1.5">
@@ -775,19 +862,77 @@ export default function App() {
 
               {/* Actions */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-2 border-t border-slate-100">
-                <a
-                  href={directWhatsAppUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md transition-colors cursor-pointer"
-                >
-                  <Phone className="w-4 h-4" />
-                  <span>
-                    {shareRecipientPhone.trim()
-                      ? `Enviar WhatsApp a ${shareRecipientPhone.trim()}`
-                      : 'Abrir WhatsApp y Enviar Mensaje'}
-                  </span>
-                </a>
+                {shareChannel === 'whatsapp' ? (
+                  <button
+                    type="button"
+                    disabled={isSendingShareInternal}
+                    onClick={async () => {
+                      setShareInternalError(null);
+                      setShareInternalSuccess(null);
+                      setIsSendingShareInternal(true);
+                      try {
+                        const res = await sendWhatsAppMessageInApp({
+                          recipientPhone: shareRecipientPhone,
+                          messageText: portalInviteMessage,
+                          config
+                        });
+                        setShareInternalSuccess(
+                          `¡Enlace enviado internamente por WhatsApp a +${res.normalizedPhone} (${res.messageId})!`
+                        );
+                      } catch (err: any) {
+                        setShareInternalError(err?.message || 'Error al enviar por WhatsApp.');
+                      } finally {
+                        setIsSendingShareInternal(false);
+                      }
+                    }}
+                    className="flex-1 py-2.5 px-4 rounded-xl bg-[#7DDACB] hover:brightness-105 text-[#151E3A] font-black text-xs flex items-center justify-center gap-2 shadow-md transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    <Phone className="w-4 h-4" />
+                    <span>
+                      {isSendingShareInternal
+                        ? 'Enviando internamente...'
+                        : 'Enviar WhatsApp Internamente (Sin salir de la App)'}
+                    </span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={isSendingShareInternal}
+                    onClick={async () => {
+                      if (!shareRecipientEmail.trim()) {
+                        setShareInternalError('Por favor ingrese el correo electrónico del paciente.');
+                        return;
+                      }
+                      setShareInternalError(null);
+                      setShareInternalSuccess(null);
+                      setIsSendingShareInternal(true);
+                      try {
+                        const res = await sendEmailViaGmailApi({
+                          to: shareRecipientEmail.trim(),
+                          subject: `Portal de Citas Médicas en Línea | ${config.clinicName}`,
+                          bodyText: portalInviteMessage.replace(/\*/g, ''),
+                          fromName: config.clinicName,
+                          loginHint: config.connectedGmailAccount || config.email || 'atpnumero1@gmail.com'
+                        });
+                        setShareInternalSuccess(
+                          `¡Correo enviado internamente desde ${res.senderEmail} a ${shareRecipientEmail.trim()}!`
+                        );
+                      } catch (err: any) {
+                        setShareInternalError(err?.message || 'Error al enviar el correo.');
+                      } finally {
+                        setIsSendingShareInternal(false);
+                      }
+                    }}
+                    className="flex-1 py-2.5 px-4 rounded-xl bg-[#395AFF] hover:brightness-110 text-white font-black text-xs flex items-center justify-center gap-2 shadow-md transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    <Mail className="w-4 h-4 text-[#7DDACB]" />
+                    <span>
+                      {isSendingShareInternal
+                        ? 'Enviando correo internamente...'
+                        : 'Enviar Correo Internamente (Sin salir de la App)'}
+                    </span>
+                  </button>
+                )}
 
                 <button
                   type="button"
@@ -809,13 +954,11 @@ export default function App() {
       {/* Footer (#151E3A with #7DDACB & #395AFF accents + Official Siglas) */}
       <footer className="mt-auto border-t-2 border-[#7DDACB] bg-[#151E3A] py-5 text-xs text-[#F4F4F4]/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex flex-col sm:flex-row items-center gap-2.5 sm:gap-3 text-center sm:text-left">
-            <div className="w-24 h-10 px-2 py-1 rounded-lg overflow-hidden border border-[#7DDACB] bg-[#F4F4F4] flex items-center justify-center shrink-0 shadow-xs">
+          <div className="flex flex-col sm:flex-row items-center gap-2.5 sm:gap-3.5 text-center sm:text-left">
+            <div className="w-36 h-11 px-2.5 py-1 rounded-lg overflow-hidden border border-[#7DDACB] bg-[#F4F4F4] flex items-center justify-center shrink-0 shadow-xs">
               <OfficialAtpLogo className="w-full h-full" />
             </div>
             <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-              <span className="font-bold text-white">{config.clinicName.replace(/\bATP\b/gi, '').trim() || 'MEDICAL'}</span>
-              <span className="hidden sm:inline text-[#7DDACB]">·</span>
               <span className="text-[#F4F4F4]/90 font-medium">{config.address}</span>
               <span className="hidden sm:inline text-[#7DDACB]">·</span>
               <span className="font-mono font-bold text-[#7DDACB]">{config.phone}</span>

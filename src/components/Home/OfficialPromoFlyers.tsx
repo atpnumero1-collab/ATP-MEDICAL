@@ -13,7 +13,7 @@ import {
   BriefcaseMedical
 } from 'lucide-react';
 import consultImg from '../../assets/images/atp_medical_consultation_1792340095088.jpg';
-import teamImg from '../../assets/images/atp_specialist_team_1792340127476.jpg';
+import teamImg from '../../assets/images/atp_specialist_team_official_v2.jpg';
 import wellnessImg from '../../assets/images/atp_therapy_wellness_1792340111007.jpg';
 
 /**
@@ -119,11 +119,8 @@ export const FlyerConsultorioHogar: React.FC = () => {
         <div className="absolute inset-0 bg-gradient-to-t from-[#F5FAFF] via-transparent to-black/10" />
 
         {/* Center Official ATP MEDICAL Bag / Delivery Badge Overlay */}
-        <div className="absolute bottom-3 left-4 sm:left-6 bg-white/95 backdrop-blur-xs px-4 py-2.5 rounded-2xl shadow-xl border-2 border-[#7DDACB] flex flex-col items-center">
-          <OfficialAtpLogo className="w-24 h-10" />
-          <span className="text-[11px] font-black tracking-[0.22em] text-[#151E3A] mt-0.5">
-            MEDICAL
-          </span>
+        <div className="absolute bottom-3 left-4 sm:left-6 bg-[#F4F4F4]/95 backdrop-blur-xs px-3.5 py-2 rounded-2xl shadow-xl border-2 border-[#7DDACB] flex items-center justify-center">
+          <OfficialAtpLogo className="w-36 h-10" transparentBg />
         </div>
 
         <div className="absolute bottom-3 right-4 sm:right-6 bg-[#151E3A]/95 text-white px-3.5 py-2 rounded-xl border border-[#7DDACB] shadow-lg flex items-center gap-2">
@@ -184,17 +181,12 @@ export const FlyerConsultasMedicas: React.FC = () => {
         {/* Top Row: Official Logo + RIF & Doctor Photo */}
         <div className="grid grid-cols-12 gap-3 items-center">
           <div className="col-span-7 space-y-2">
-            {/* Logo + ATP MEDICAL + RIF */}
-            <div className="flex items-center gap-2.5">
-              <OfficialAtpLogo className="w-22 h-10 shrink-0" />
-              <div className="leading-none">
-                <span className="font-black text-sm sm:text-base text-[#151E3A] block tracking-tight">
-                  ATP MEDICAL
-                </span>
-                <span className="text-[10px] font-bold text-[#1F2952] tracking-wider">
-                  J-50642234-4
-                </span>
-              </div>
+            {/* Logo Oficial Completo + RIF */}
+            <div className="flex flex-col items-start gap-0.5">
+              <OfficialAtpLogo className="w-44 h-12 shrink-0" transparentBg />
+              <span className="text-[10px] font-bold text-[#1F2952] tracking-wider pl-1">
+                J-50642234-4
+              </span>
             </div>
 
             <div>
@@ -395,13 +387,8 @@ export const FlyerCasheaTicket: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <OfficialAtpLogo className="w-18 h-8" />
-          <span className="font-black text-xs leading-none">
-            ATP
-            <br />
-            MEDICAL
-          </span>
+        <div className="flex items-center justify-center">
+          <OfficialAtpLogo className="w-32 h-9" transparentBg />
         </div>
 
         <div className="flex items-center gap-1 text-[10px] font-bold text-[#151E3A]">

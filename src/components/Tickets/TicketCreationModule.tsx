@@ -525,12 +525,9 @@ export const TicketCreationModule: React.FC<TicketCreationModuleProps> = ({
             <div className="p-6 space-y-4 text-xs font-mono printable-area">
               
               <div className="text-center border-b-2 border-[#151E3A] pb-3">
-                <div className="w-32 h-13 px-2.5 py-1 mx-auto mb-2 rounded-lg overflow-hidden border-2 border-[#7DDACB] bg-[#F4F4F4] flex items-center justify-center shadow-xs">
+                <div className="w-40 h-13 px-2.5 py-1 mx-auto mb-2 rounded-lg overflow-hidden border-2 border-[#7DDACB] bg-[#F4F4F4] flex items-center justify-center shadow-xs">
                   <OfficialAtpLogo className="w-full h-full" />
                 </div>
-                <h2 className="text-base font-black tracking-tight text-[#151E3A] font-sans">
-                  {config.clinicName.replace(/\bATP\b/gi, '').trim() || 'MEDICAL'}
-                </h2>
                 <p className="text-[11px] text-[#1F2952] font-sans font-bold">{config.branchName}</p>
                 <div className="mt-3 text-3xl font-black tracking-widest text-white bg-[#151E3A] py-2.5 rounded-lg border-b-4 border-[#7DDACB]">
                   {issuedTicket.ticketNumber}

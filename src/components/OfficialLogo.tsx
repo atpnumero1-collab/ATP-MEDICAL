@@ -6,9 +6,10 @@ interface OfficialAtpLogoProps {
 }
 
 /**
- * Renderizado vectorial (SVG puro) de alta definición de las siglas oficiales ATP.
- * Garantiza nitidez infinita en cualquier resolución de pantalla (4K, Retina, móvil e impresión PDF)
- * sin pixelación ni artefactos de compresión JPG.
+ * Renderizado vectorial (SVG puro) de alta definición del logo oficial completo ATP MEDICAL
+ * (basado exactamente en logo_atp_2_f7203442.pdf: isotipo geométrico 'a t p' a la izquierda
+ * y logotipo 'ATP MEDICAL' apilado a la derecha).
+ * Garantiza nitidez infinita en cualquier resolución de pantalla (4K, Retina, móvil e impresión PDF).
  */
 export const OfficialAtpLogo: React.FC<OfficialAtpLogoProps> = ({
   className = 'w-full h-full',
@@ -17,50 +18,95 @@ export const OfficialAtpLogo: React.FC<OfficialAtpLogoProps> = ({
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="310 230 1305 580"
+      viewBox="305 345 1310 365"
       className={className}
       shapeRendering="geometricPrecision"
       role="img"
-      aria-label="Siglas Oficiales ATP"
+      aria-label="Logo Oficial ATP MEDICAL"
     >
       {!transparentBg && (
-        <rect x="310" y="230" width="1305" height="580" fill="#F4F4F4" />
+        <rect x="305" y="345" width="1310" height="365" fill="#F4F4F4" />
       )}
 
+      {/* ===================================================================
+          ISOTIPO GEOMÉTRICO 'a t p' (Izquierda)
+         =================================================================== */}
+
       {/* 1. Sigla 'a' (Izquierda) */}
-      {/* Lóbulo superior derecho azul marino (#132352) */}
+      {/* Lóbulo superior derecho azul marino (#132452) */}
       <path
-        d="M 488.5 606.5 L 488.5 546.5 A 87.5 87.5 0 0 1 663.5 546.5 L 663.5 606.5 Z"
-        fill="#132352"
+        d="M 422 574.5 L 422 541 A 48 48 0 0 1 518 541 L 518 574.5 Z"
+        fill="#132452"
       />
-      {/* Lóbulo inferior horizontal turquesa (#18DACB) */}
+      {/* Lóbulo inferior horizontal turquesa (#18DBCB) */}
       <path
-        d="M 663.5 606 L 429 606 A 87.5 87.5 0 0 0 429 781 L 663.5 781 Z"
-        fill="#18DACB"
+        d="M 518 574 L 389 574 A 48 48 0 0 0 389 670 L 518 670 Z"
+        fill="#18DBCB"
       />
 
       {/* 2. Sigla 't' / Cruz Médica (Centro) */}
-      {/* Círculo superior turquesa (#18DACB) */}
-      <circle cx="961.5" cy="345.5" r="87.5" fill="#18DACB" />
-      {/* Brazo izquierdo turquesa (#18DACB) */}
+      {/* Círculo superior turquesa (#18DBCB) */}
+      <circle cx="681.5" cy="430.5" r="48" fill="#18DBCB" />
+      {/* Brazo izquierdo turquesa (#18DBCB) */}
       <path
-        d="M 875 459 L 814 459 A 87.5 87.5 0 0 0 814 634 L 875 634 Z"
-        fill="#18DACB"
+        d="M 634.5 493 L 602 493 A 48 48 0 0 0 602 589 L 634.5 589 Z"
+        fill="#18DBCB"
       />
-      {/* Cuerpo central y brazo derecho azul marino (#132352) */}
+      {/* Cuerpo central y brazo derecho azul marino (#132452) */}
       <path
-        d="M 874 459 L 1108.5 459 A 87.5 87.5 0 0 1 1108.5 634 L 1049 634 L 1049 693.5 A 87.5 87.5 0 0 1 874 693.5 Z"
-        fill="#132352"
+        d="M 634 493 L 763 493 A 48 48 0 0 1 763 589 L 730 589 L 730 622 A 48 48 0 0 1 634 622 Z"
+        fill="#132452"
       />
 
-      {/* 3. Sigla 'p' (Derecha) */}
-      {/* Cuerpo azul marino (#132352) */}
+      {/* 3. Sigla 'p' (Derecha del isotipo) */}
+      {/* Cuerpo azul marino (#132452) */}
       <path
-        d="M 1346.5 459 L 1493.5 459 A 87.5 87.5 0 0 1 1493.5 634 L 1434 634 L 1434 693.5 A 87.5 87.5 0 0 1 1259 693.5 L 1259 546.5 L 1346.5 546.5 Z"
-        fill="#132352"
+        d="M 891.5 493 L 974 493 A 48 48 0 0 1 974 589 L 942 589 L 942 622 A 48 48 0 0 1 846 622 L 846 538.5 L 891.5 538.5 Z"
+        fill="#132452"
       />
-      {/* Círculo superior izquierdo turquesa (#18DACB) */}
-      <circle cx="1346.5" cy="546.5" r="87.5" fill="#18DACB" />
+      {/* Círculo superior izquierdo turquesa (#18DBCB) */}
+      <circle cx="891.5" cy="538.5" r="45.5" fill="#18DBCB" />
+
+      {/* ===================================================================
+          LOGOTIPO 'ATP / MEDICAL' (Derecha, #122F3D)
+         =================================================================== */}
+      <g fill="#122F3D">
+        {/* --- LÍNEA SUPERIOR: ATP --- */}
+        {/* A */}
+        <path
+          fillRule="evenodd"
+          d="M 1087 492.5 L 1108 492.5 L 1141.5 568.5 L 1119.5 568.5 L 1113 553 L 1082 553 L 1075.5 568.5 L 1053.5 568.5 Z M 1097.5 513 L 1087.5 538.5 L 1107.5 538.5 Z"
+        />
+        {/* T */}
+        <path d="M 1141 492.5 L 1207.5 492.5 L 1207.5 508.5 L 1184.5 508.5 L 1184.5 568.5 L 1164 568.5 L 1164 508.5 L 1141 508.5 Z" />
+        {/* P */}
+        <path
+          fillRule="evenodd"
+          d="M 1217 492.5 L 1255 492.5 C 1273 492.5 1284 503 1284 520 C 1284 537 1273 547.5 1255 547.5 L 1237.5 547.5 L 1237.5 568.5 L 1217 568.5 Z M 1237.5 508 L 1253 508 C 1260.5 508 1264.5 512.5 1264.5 520 C 1264.5 527.5 1260.5 532 1253 532 L 1237.5 532 Z"
+        />
+
+        {/* --- LÍNEA INFERIOR: MEDICAL --- */}
+        {/* M */}
+        <path d="M 1054 593.5 L 1071.5 593.5 L 1097.5 636.5 L 1123.5 593.5 L 1141 593.5 L 1141 669.5 L 1121.5 669.5 L 1121.5 626.5 L 1097.5 664.5 L 1097 664.5 L 1073.5 626.5 L 1073.5 669.5 L 1054 669.5 Z" />
+        {/* E */}
+        <path d="M 1157 593.5 L 1215.5 593.5 L 1215.5 609 L 1177.5 609 L 1177.5 624 L 1211.5 624 L 1211.5 639 L 1177.5 639 L 1177.5 654 L 1217 654 L 1217 669.5 L 1157 669.5 Z" />
+        {/* D */}
+        <path
+          fillRule="evenodd"
+          d="M 1230 593.5 L 1265 593.5 C 1290.5 593.5 1306.5 609 1306.5 631.5 C 1306.5 654 1290.5 669.5 1265 669.5 L 1230 669.5 Z M 1250.5 609.5 L 1264.5 609.5 C 1278.5 609.5 1286 618 1286 631.5 C 1286 645 1278.5 653.5 1264.5 653.5 L 1250.5 653.5 Z"
+        />
+        {/* I */}
+        <path d="M 1319 593.5 L 1339.5 593.5 L 1339.5 669.5 L 1319 669.5 Z" />
+        {/* C */}
+        <path d="M 1424.5 655.5 C 1416.5 665 1405 671 1390.5 671 C 1367 671 1351 654.5 1351 631.5 C 1351 608.5 1367 592 1390.5 592 C 1405 592 1416.5 598 1424.5 607.5 L 1411.5 619.5 C 1406 613 1399.5 609 1391 609 C 1379.5 609 1372 618 1372 631.5 C 1372 645 1379.5 654 1391 654 C 1399.5 654 1406 650 1411.5 643.5 Z" />
+        {/* A */}
+        <path
+          fillRule="evenodd"
+          d="M 1459 593.5 L 1480 593.5 L 1513.5 669.5 L 1491.5 669.5 L 1485 654 L 1454 654 L 1447.5 669.5 L 1425.5 669.5 Z M 1469.5 614 L 1459.5 639.5 L 1479.5 639.5 Z"
+        />
+        {/* L */}
+        <path d="M 1520 593.5 L 1540.5 593.5 L 1540.5 654 L 1581.5 654 L 1581.5 669.5 L 1520 669.5 Z" />
+      </g>
     </svg>
   );
 };
