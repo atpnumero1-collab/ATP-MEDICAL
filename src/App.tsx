@@ -21,6 +21,12 @@ import {
   saveToStorage, 
   resetAllToInitial 
 } from './utils/storage';
+import {
+  getPublicPortalUrl,
+  buildPortalInviteMessage,
+  buildWhatsAppUrl,
+  formatPhoneForWhatsApp
+} from './utils/whatsapp';
 import { testConnection } from './firebase/firebase';
 import {
   seedInitialFirestoreData,
@@ -90,6 +96,9 @@ export default function App() {
   // Modal for sharing portal link via WhatsApp
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedFullMessage, setCopiedFullMessage] = useState(false);
+  const [shareRecipientPhone, setShareRecipientPhone] = useState('');
+  const [shareRecipientName, setShareRecipientName] = useState('');
 
   // Main state initialized with local storage cache for instant offline responsiveness
   const [config, setConfig] = useState<ClinicConfig>(() => loadStoredData().config);
@@ -104,10 +113,8 @@ export default function App() {
   const [preselectedAppointmentId, setPreselectedAppointmentId] = useState<string>('');
   const [isNewAppointmentModalOpen, setIsNewAppointmentModalOpen] = useState(false);
 
-  // URL for self-service portal
-  const publicPortalUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}${window.location.pathname}?portal=autogestion`
-    : '?portal=autogestion';
+  // URL for self-service portal (automatically resolves ais-dev- to ais-pre- and preserves Vercel domains)
+  const publicPortalUrl = getPublicPortalUrl();
 
   // Initialize Firebase Firestore connection & realtime subscriptions
   useEffect(() => {
@@ -336,6 +343,10 @@ export default function App() {
     seedInitialFirestoreData().catch(e => console.error(e));
   };
 
+  // Live formatted WhatsApp invite message
+  const portalInviteMessage = buildPortalInviteMessage(config, publicPortalUrl, shareRecipientName);
+  const directWhatsAppUrl = buildWhatsAppUrl(portalInviteMessage, shareRecipientPhone);
+
   // Copy portal link helper
   const handleCopyPortalLink = () => {
     navigator.clipboard.writeText(publicPortalUrl);
@@ -343,15 +354,11 @@ export default function App() {
     setTimeout(() => setCopiedLink(false), 2500);
   };
 
-  // WhatsApp share helper
-  const handleShareWhatsAppDirect = () => {
-    const msg = encodeURIComponent(
-      `Hola, le saludamos de *${config.clinicName}* (C.C. Parque Humboldt, Caracas).\n\n` +
-      `Puede consultar nuestros médicos especialistas y *autogestionar su cita médica* de forma rápida y segura desde su teléfono en el siguiente enlace oficial:\n\n` +
-      `${publicPortalUrl}\n\n` +
-      `_Estamos para servirle. Teléfono de contacto: ${config.phone}_`
-    );
-    window.open(`https://api.whatsapp.com/send?text=${msg}`, '_blank');
+  // Copy full WhatsApp message helper
+  const handleCopyFullMessage = () => {
+    navigator.clipboard.writeText(portalInviteMessage);
+    setCopiedFullMessage(true);
+    setTimeout(() => setCopiedFullMessage(false), 2500);
   };
 
   // IF PATIENT PORTAL IS ACTIVE (either public direct link or staff preview)
@@ -389,7 +396,7 @@ export default function App() {
   const pendingIntakesCount = intakes.filter(i => i.status === 'en_espera' || i.status === 'pendiente_pago' || i.status === 'llamado').length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-sky-50/20 to-blue-50/25 text-slate-900 flex flex-col antialiased">
+    <div className="min-h-screen bg-[#F4F4F4] text-[#151E3A] flex flex-col antialiased">
       
       {/* Navigation Top Bar - Sticky with Modules ALWAYS Visible */}
       <Navigation
@@ -530,20 +537,19 @@ export default function App() {
 
       {/* Modal: Share Self-Service Link for WhatsApp */}
       {isShareModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
+        <div className="fixed inset-0 z-50 bg-[#151E3A]/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-[#1F2952]/20 overflow-hidden my-auto">
             <div 
-              className="p-5 text-white flex items-center justify-between"
-              style={{ backgroundColor: config.primaryColor }}
+              className="p-4 sm:p-5 bg-[#151E3A] border-b-2 border-[#7DDACB] text-white flex items-center justify-between"
             >
               <div className="flex items-center gap-2.5">
-                <Share2 className="w-5 h-5 text-emerald-400" />
+                <Share2 className="w-5 h-5 text-[#7DDACB]" />
                 <div>
-                  <h3 className="font-bold text-sm">
-                    Link de Autogestión de Citas para Pacientes
+                  <h3 className="font-bold text-sm sm:text-base">
+                    Envío de Enlace de Autogestión por WhatsApp
                   </h3>
-                  <p className="text-[11px] text-slate-200">
-                    Enviar a pacientes a través de WhatsApp o redes sociales
+                  <p className="text-[11px] text-[#7DDACB]">
+                    Envíe el portal oficial a un número específico o a cualquier contacto
                   </p>
                 </div>
               </div>
@@ -551,64 +557,123 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setIsShareModalOpen(false)}
-                className="text-white hover:bg-white/10 p-1.5 rounded-lg transition-colors"
+                className="text-white hover:bg-white/10 p-1.5 rounded-lg transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-6 space-y-4 text-xs">
-              <p className="text-slate-600 leading-relaxed">
-                Este enlace permite a los pacientes desplegar el portal de autogestión en cualquier teléfono o computador para reservar su cita médica en ATP Medical Caracas:
-              </p>
+            <div className="p-5 sm:p-6 space-y-4 text-xs">
+              {/* Optional Direct Recipient Inputs */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200/90">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">
+                    Teléfono WhatsApp (Opcional)
+                  </label>
+                  <input
+                    type="tel"
+                    value={shareRecipientPhone}
+                    onChange={(e) => setShareRecipientPhone(e.target.value)}
+                    placeholder="Ej: 0414-1234567"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-900 font-mono text-xs focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                  />
+                  <span className="text-[10px] text-slate-500 mt-1 block">
+                    {shareRecipientPhone.trim()
+                      ? `Se enviará directo a: +${formatPhoneForWhatsApp(shareRecipientPhone)}`
+                      : 'Si lo deja vacío, elegirá el contacto en WhatsApp'}
+                  </span>
+                </div>
 
-              {/* URL Box */}
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between gap-2">
-                <span className="font-mono text-xs text-slate-800 truncate select-all">
-                  {publicPortalUrl}
-                </span>
-                <button
-                  type="button"
-                  onClick={handleCopyPortalLink}
-                  className="px-3 py-1.5 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 font-bold text-xs text-slate-700 shrink-0 flex items-center gap-1 shadow-xs"
-                >
-                  {copiedLink ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>¡Copiado!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5 text-slate-500" />
-                      <span>Copiar</span>
-                    </>
-                  )}
-                </button>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">
+                    Nombre del Paciente (Opcional)
+                  </label>
+                  <input
+                    type="text"
+                    value={shareRecipientName}
+                    onChange={(e) => setShareRecipientName(e.target.value)}
+                    placeholder="Ej: María Pérez"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-900 text-xs focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                  />
+                  <span className="text-[10px] text-slate-500 mt-1 block">
+                    Personaliza el saludo del mensaje automáticamente
+                  </span>
+                </div>
               </div>
 
-              {/* Features notice */}
-              <div className="bg-emerald-50/80 p-3.5 rounded-xl border border-emerald-200 text-emerald-900 space-y-1">
-                <p className="font-bold flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>Beneficios del enlace:</span>
-                </p>
-                <ul className="list-disc list-inside text-[11px] text-emerald-800 space-y-0.5 pl-1">
-                  <li>Respeta estrictamente los días y horarios oficiales de cada especialista.</li>
-                  <li>Las citas se guardan directamente en Firebase en tiempo real con etiqueta <b>«Autogestionada»</b>.</li>
-                  <li>Genera un comprobante digital al paciente para su WhatsApp y calendario.</li>
-                </ul>
+              {/* URL Box */}
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  Enlace Oficial del Portal de Pacientes:
+                </label>
+                <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between gap-2">
+                  <span className="font-mono text-xs text-blue-700 font-semibold truncate select-all">
+                    {publicPortalUrl}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleCopyPortalLink}
+                    className="px-3 py-1.5 rounded-lg bg-white border border-slate-300 hover:bg-slate-100 font-bold text-xs text-slate-700 shrink-0 flex items-center gap-1 shadow-2xs cursor-pointer"
+                  >
+                    {copiedLink ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        <span className="text-emerald-700">¡Enlace Copiado!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5 text-slate-500" />
+                        <span>Copiar Link</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Live WhatsApp Message Preview */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="font-bold text-slate-700 flex items-center gap-1.5">
+                    <span>Vista Previa del Mensaje a Enviar:</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleCopyFullMessage}
+                    className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 cursor-pointer"
+                  >
+                    {copiedFullMessage ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>¡Mensaje copiado!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3 h-3" />
+                        <span>Copiar mensaje completo</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+                <div className="p-3.5 rounded-xl bg-[#ECFDF5] border border-emerald-200 text-slate-800 whitespace-pre-wrap font-sans text-xs leading-relaxed max-h-44 overflow-y-auto shadow-inner">
+                  {portalInviteMessage}
+                </div>
               </div>
 
               {/* Actions */}
-              <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={handleShareWhatsAppDirect}
-                  className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-colors"
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-2 border-t border-slate-100">
+                <a
+                  href={directWhatsAppUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md transition-colors cursor-pointer"
                 >
                   <Phone className="w-4 h-4" />
-                  <span>Compartir Directo por WhatsApp</span>
-                </button>
+                  <span>
+                    {shareRecipientPhone.trim()
+                      ? `Enviar WhatsApp a ${shareRecipientPhone.trim()}`
+                      : 'Abrir WhatsApp y Enviar Mensaje'}
+                  </span>
+                </a>
 
                 <button
                   type="button"
@@ -616,7 +681,7 @@ export default function App() {
                     setIsShareModalOpen(false);
                     setIsStaffPortalPreview(true);
                   }}
-                  className="py-2.5 px-4 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5"
+                  className="py-2.5 px-4 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
                   <span>Probar Portal</span>
@@ -627,25 +692,34 @@ export default function App() {
         </div>
       )}
 
-      {/* Footer */}
-      <footer className="mt-auto border-t border-slate-200/80 bg-white py-5 text-xs text-slate-500">
+      {/* Footer (#151E3A with #7DDACB & #395AFF accents + Official Siglas) */}
+      <footer className="mt-auto border-t-2 border-[#7DDACB] bg-[#151E3A] py-5 text-xs text-[#F4F4F4]/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2 text-center sm:text-left">
-            <span className="font-bold text-slate-900">{config.clinicName}</span>
-            <span className="hidden sm:inline text-slate-300">·</span>
-            <span className="text-slate-600 font-medium">{config.address}</span>
-            <span className="hidden sm:inline text-slate-300">·</span>
-            <span className="font-mono font-bold text-slate-900">{config.phone}</span>
+          <div className="flex flex-col sm:flex-row items-center gap-2.5 sm:gap-3 text-center sm:text-left">
+            <div className="w-20 h-9 rounded-lg overflow-hidden border border-[#7DDACB] bg-[#F4F4F4] flex items-center justify-center shrink-0 shadow-xs">
+              <img
+                src="/assets/aistudio/siglas_atp.jpg"
+                alt="Siglas Oficiales"
+                className="w-full h-full object-cover object-center scale-[1.55]"
+              />
+            </div>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+              <span className="font-bold text-white">{config.clinicName.replace(/\bATP\b/gi, '').trim() || 'MEDICAL'}</span>
+              <span className="hidden sm:inline text-[#7DDACB]">·</span>
+              <span className="text-[#F4F4F4]/90 font-medium">{config.address}</span>
+              <span className="hidden sm:inline text-[#7DDACB]">·</span>
+              <span className="font-mono font-bold text-[#7DDACB]">{config.phone}</span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3 text-slate-500 text-[11px] font-medium">
+          <div className="flex items-center gap-3 text-[#F4F4F4]/80 text-[11px] font-medium">
             <span>{config.email}</span>
-            <span>·</span>
+            <span className="text-[#7DDACB]">·</span>
             <button 
               onClick={() => setActiveModule('settings')}
-              className="text-blue-600 hover:text-blue-800 font-bold hover:underline"
+              className="text-[#7DDACB] hover:text-white font-bold hover:underline cursor-pointer"
             >
-              Ajustar Colores
+              Identidad & Colores Oficiales
             </button>
           </div>
         </div>

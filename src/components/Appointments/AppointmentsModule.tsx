@@ -39,6 +39,13 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { getTodayDateString } from '../../data/initialData';
+import {
+  getPublicPortalUrl,
+  buildPortalInviteMessage,
+  buildAppointmentReminderMessage,
+  buildWhatsAppUrl,
+  formatPhoneForWhatsApp
+} from '../../utils/whatsapp';
 
 // --- UTILITIES FOR STRICT SCHEDULE RESTRICTIONS ---
 
@@ -281,24 +288,13 @@ export const AppointmentsModule: React.FC<AppointmentsModuleProps> = ({
   const [copiedPortalLink, setCopiedPortalLink] = useState(false);
 
   // Portal URL calculation
-  const publicPortalUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}${window.location.pathname}?portal=autogestion`
-    : '?portal=autogestion';
+  const publicPortalUrl = getPublicPortalUrl();
+  const portalWhatsAppUrl = buildWhatsAppUrl(buildPortalInviteMessage(config, publicPortalUrl));
 
   const handleCopyPortalLink = () => {
     navigator.clipboard.writeText(publicPortalUrl);
     setCopiedPortalLink(true);
     setTimeout(() => setCopiedPortalLink(false), 2500);
-  };
-
-  const handleShareWhatsAppLink = () => {
-    const msg = encodeURIComponent(
-      `Hola, le saludamos de *${config.clinicName}* (C.C. Parque Humboldt, Caracas).\n\n` +
-      `Puede consultar nuestros médicos especialistas y *autogestionar su cita médica* de forma rápida y segura desde su teléfono en el siguiente enlace oficial:\n\n` +
-      `${publicPortalUrl}\n\n` +
-      `_Estamos para servirle. Teléfono de contacto: ${config.phone}_`
-    );
-    window.open(`https://api.whatsapp.com/send?text=${msg}`, '_blank');
   };
 
 
@@ -649,7 +645,7 @@ export const AppointmentsModule: React.FC<AppointmentsModuleProps> = ({
   };
 
   const getReminderMessage = (apt: Appointment) => {
-    return `Estimado/a ${apt.patientName}, le recordamos su cita en ${config.clinicName} el día ${apt.date} a las ${apt.time} hrs con ${apt.doctorName} (${apt.specialty}). Dirección: ${config.address}. Teléfono: ${config.phone}. Por favor presentarse 15 minutos antes para su recepción y asignación de ticket.`;
+    return buildAppointmentReminderMessage(apt, config);
   };
 
   const copyToClipboard = (text: string) => {
@@ -727,7 +723,7 @@ export const AppointmentsModule: React.FC<AppointmentsModuleProps> = ({
           <button
             type="button"
             onClick={handleCopyPortalLink}
-            className="px-3.5 py-2 rounded-xl bg-white text-slate-900 hover:bg-slate-50 font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all active:scale-95"
+            className="px-3.5 py-2 rounded-xl bg-white text-slate-900 hover:bg-slate-50 font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all active:scale-95 cursor-pointer"
           >
             {copiedPortalLink ? (
               <>
@@ -742,15 +738,16 @@ export const AppointmentsModule: React.FC<AppointmentsModuleProps> = ({
             )}
           </button>
 
-          <button
-            type="button"
-            onClick={handleShareWhatsAppLink}
-            className="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all active:scale-95"
+          <a
+            href={portalWhatsAppUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all active:scale-95 cursor-pointer"
             title="Compartir link directo a través de WhatsApp Web / App"
           >
             <Phone className="w-4 h-4" />
             <span>Compartir WhatsApp</span>
-          </button>
+          </a>
 
           {onOpenPatientPortal && (
             <button
@@ -1973,38 +1970,44 @@ export const AppointmentsModule: React.FC<AppointmentsModuleProps> = ({
       {/* MODAL: Recordatorio WhatsApp / Mensaje */}
       {reminderAppointment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-          <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full p-5 space-y-4 text-xs">
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-md w-full p-5 space-y-4 text-xs">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <div className="flex items-center gap-2">
                 <MessageSquare className="w-4 h-4 text-emerald-600" />
-                <h3 className="text-sm font-bold text-slate-900">Recordatorio para el Paciente</h3>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Recordatorio WhatsApp para el Paciente</h3>
+                  <p className="text-[11px] text-slate-500">
+                    Destinatario: <span className="font-mono font-bold text-emerald-700">+{formatPhoneForWhatsApp(reminderAppointment.patientPhone)}</span> ({reminderAppointment.patientName})
+                  </p>
+                </div>
               </div>
-              <button onClick={() => setReminderAppointment(null)} className="text-slate-400 p-1">
+              <button onClick={() => setReminderAppointment(null)} className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 font-mono text-[11px] leading-relaxed text-slate-800">
+            <div className="bg-[#ECFDF5] p-3.5 rounded-xl border border-emerald-200 font-sans text-xs whitespace-pre-wrap leading-relaxed text-slate-800 shadow-inner">
               {getReminderMessage(reminderAppointment)}
             </div>
 
             <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200">
               <a
-                href={`https://wa.me/${reminderAppointment.patientPhone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(getReminderMessage(reminderAppointment))}`}
+                href={buildWhatsAppUrl(getReminderMessage(reminderAppointment), reminderAppointment.patientPhone)}
                 target="_blank"
-                rel="noreferrer"
-                className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 flex items-center gap-1.5"
+                rel="noopener noreferrer"
+                className="flex-1 py-2 px-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 flex items-center justify-center gap-1.5 shadow-sm transition-colors"
               >
-                <span>Abrir en WhatsApp</span>
+                <Phone className="w-3.5 h-3.5" />
+                <span>Enviar en WhatsApp</span>
               </a>
 
               <button
                 type="button"
                 onClick={() => copyToClipboard(getReminderMessage(reminderAppointment))}
-                className="px-3 py-1.5 border border-slate-200 rounded-lg text-slate-700 font-semibold hover:bg-slate-50 flex items-center gap-1.5"
+                className="py-2 px-3 border border-slate-200 rounded-xl text-slate-700 font-bold hover:bg-slate-50 flex items-center gap-1.5 cursor-pointer"
               >
                 {copiedReminder ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copiedReminder ? 'Copiado' : 'Copiar Texto'}</span>
+                <span>{copiedReminder ? '¡Copiado!' : 'Copiar Texto'}</span>
               </button>
             </div>
           </div>

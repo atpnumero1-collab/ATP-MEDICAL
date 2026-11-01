@@ -50,14 +50,14 @@ export const Navigation: React.FC<NavigationProps> = ({
       label: 'Inicio', 
       shortLabel: 'Inicio',
       icon: Home,
-      accentColor: '#3b82f6' // blue-500
+      accentColor: '#7DDACB'
     },
     { 
       id: 'tickets' as const, 
       label: 'Creación de Tickets', 
       shortLabel: 'Tickets',
       icon: PlusCircle,
-      accentColor: '#0ea5e9' // sky-500
+      accentColor: '#7DDACB'
     },
     { 
       id: 'waitingRoom' as const, 
@@ -65,104 +65,83 @@ export const Navigation: React.FC<NavigationProps> = ({
       shortLabel: 'En Sala',
       icon: HeartPulse, 
       badge: pendingIntakesCount,
-      accentColor: '#f43f5e' // rose-500
+      accentColor: '#7DDACB'
     },
     { 
       id: 'appointments' as const, 
       label: 'Citas y Agenda', 
       shortLabel: 'Citas',
       icon: Calendar,
-      accentColor: '#3b82f6' // blue-500
+      accentColor: '#7DDACB'
     },
     { 
       id: 'medicalRecords' as const, 
       label: 'Historias Médicas', 
       shortLabel: 'Historias',
       icon: FileText,
-      accentColor: '#8b5cf6' // violet-500
+      accentColor: '#7DDACB'
     },
     { 
       id: 'patients' as const, 
       label: 'Directorio Pacientes', 
       shortLabel: 'Pacientes',
       icon: Users,
-      accentColor: '#06b6d4' // cyan-500
+      accentColor: '#7DDACB'
     },
     { 
       id: 'doctors' as const, 
       label: 'Médicos & Box', 
       shortLabel: 'Médicos',
       icon: Stethoscope,
-      accentColor: '#10b981' // emerald-500
+      accentColor: '#7DDACB'
     },
     { 
       id: 'reports' as const, 
       label: 'Métricas & Reportes', 
       shortLabel: 'Métricas',
       icon: BarChart3,
-      accentColor: '#ec4899' // pink-500
+      accentColor: '#7DDACB'
     },
     { 
       id: 'settings' as const, 
       label: 'Ajuste de Colores', 
       shortLabel: 'Colores',
       icon: Palette,
-      accentColor: '#6366f1' // indigo-500
+      accentColor: '#7DDACB'
     },
   ];
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b-2 border-slate-200 shadow-md">
-      {/* Upper Brand & Quick Actions Row */}
+    <header className="sticky top-0 z-40 bg-[#151E3A] text-white border-b border-[#1F2952] shadow-lg">
+      {/* Upper Brand & Quick Actions Row (#151E3A) */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-4 h-15 py-1">
           
-          {/* Brand Zone */}
-          <div className="flex items-center gap-3 shrink-0">
+          {/* Brand Zone with Official Siglas from siglas_atp.pdf */}
+          <div className="flex items-center shrink-0">
             <div 
-              className="w-10 h-10 rounded-xl overflow-hidden border-2 border-blue-500/30 flex items-center justify-center shadow-md cursor-pointer hover:scale-105 transition-transform bg-white"
+              className="w-28 sm:w-32 h-11 rounded-xl overflow-hidden border-2 border-[#7DDACB] flex items-center justify-center shadow-md cursor-pointer hover:scale-105 transition-transform bg-[#F4F4F4] shrink-0"
               onClick={() => setActiveModule('home')}
-              title="ATP MEDICAL - C.C. Parque Humboldt, Caracas"
+              title="Inicio · C.C. Parque Humboldt, Caracas"
             >
               <img 
-                src="/src/assets/images/atp_medical_badge_1792268353732.jpg" 
-                alt="ATP MEDICAL" 
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
+                src="/assets/aistudio/siglas_atp.jpg" 
+                alt="Logo Oficial ATP" 
+                className="w-full h-full object-cover object-center scale-[1.55]"
               />
-            </div>
-            <div 
-              className="cursor-pointer"
-              onClick={() => setActiveModule('home')}
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-xl font-black tracking-tight text-slate-900 whitespace-nowrap">
-                  {config.clinicName}
-                </span>
-                <span 
-                  className="w-2.5 h-2.5 rounded-full inline-block shadow-sm animate-pulse"
-                  style={{ backgroundColor: config.accentColor || '#00A3FF' }}
-                />
-              </div>
-              <p className="text-[11px] font-semibold text-blue-800/80 whitespace-nowrap leading-none hidden sm:block">
-                {config.branchName}
-              </p>
             </div>
           </div>
 
-          {/* Quick Actions (WhatsApp Patient Link, New Appointment, Triage/Admission) */}
+          {/* Quick Actions (WhatsApp Patient Link #7DDACB, New Appointment #1F2952, Admission #395AFF) */}
           <div className="flex items-center gap-2 shrink-0">
             {onSharePortalLink && (
               <button
                 type="button"
                 onClick={onSharePortalLink}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 rounded-lg shadow-sm transition-all whitespace-nowrap active:scale-95"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-extrabold text-[#151E3A] bg-[#7DDACB] hover:brightness-105 rounded-lg shadow-sm transition-all whitespace-nowrap active:scale-95 cursor-pointer"
                 title="Copiar o enviar por WhatsApp el enlace de autogestión de citas para pacientes"
               >
-                <Share2 className="w-3.5 h-3.5" />
+                <Share2 className="w-3.5 h-3.5 text-[#151E3A]" />
                 <span className="hidden sm:inline">Link Autogestión WhatsApp</span>
                 <span className="sm:hidden">WhatsApp</span>
               </button>
@@ -170,20 +149,19 @@ export const Navigation: React.FC<NavigationProps> = ({
 
             <button
               onClick={onQuickAppointment}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-sky-800 bg-sky-50 hover:bg-sky-100 border border-sky-300 rounded-lg transition-colors whitespace-nowrap shadow-2xs"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-[#1F2952] hover:bg-[#1F2952]/80 border border-[#7DDACB]/40 rounded-lg transition-colors whitespace-nowrap shadow-2xs cursor-pointer"
               title="Agendar nueva cita médica"
             >
-              <CalendarPlus className="w-3.5 h-3.5 text-sky-600" />
+              <CalendarPlus className="w-3.5 h-3.5 text-[#7DDACB]" />
               <span>Nueva Cita</span>
             </button>
 
             <button
               onClick={onQuickIntake}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white rounded-lg shadow-md hover:brightness-110 active:scale-95 transition-all whitespace-nowrap"
-              style={{ backgroundColor: config.primaryColor || '#0B5ED7' }}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-[#395AFF] hover:brightness-110 rounded-lg shadow-md active:scale-95 transition-all whitespace-nowrap cursor-pointer"
               title="Registrar ingreso / admisión inmediata con triaje"
             >
-              <PlusCircle className="w-3.5 h-3.5" />
+              <PlusCircle className="w-3.5 h-3.5 text-[#7DDACB]" />
               <span>Ingreso Paciente</span>
             </button>
           </div>
@@ -191,8 +169,8 @@ export const Navigation: React.FC<NavigationProps> = ({
         </div>
       </div>
 
-      {/* LOWER ROW: MODULES BAR - ALWAYS VISIBLE ON SCREEN! */}
-      <div className="bg-gradient-to-r from-slate-100/90 via-sky-50/50 to-slate-100/90 border-t border-slate-200/90 px-2 sm:px-4 py-1.5 overflow-x-auto no-scrollbar shadow-inner">
+      {/* LOWER ROW: MODULES BAR - ALWAYS VISIBLE ON SCREEN (#1F2952 with #395AFF active & #7DDACB accents) */}
+      <div className="bg-[#1F2952] border-t border-[#7DDACB]/25 px-2 sm:px-4 py-1.5 overflow-x-auto no-scrollbar shadow-inner">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-1 sm:gap-2">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -203,16 +181,14 @@ export const Navigation: React.FC<NavigationProps> = ({
                 onClick={() => setActiveModule(item.id)}
                 className={`group flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                   isActive 
-                    ? 'text-white shadow-md scale-102 ring-2 ring-white/60' 
-                    : 'text-slate-700 hover:text-slate-900 hover:bg-white/90 border border-transparent hover:border-slate-300/80 shadow-2xs'
+                    ? 'bg-[#395AFF] text-white shadow-md scale-102 ring-1 ring-[#7DDACB]' 
+                    : 'text-[#F4F4F4]/90 hover:text-white hover:bg-[#151E3A]/70 border border-transparent hover:border-[#7DDACB]/30'
                 }`}
-                style={isActive ? { backgroundColor: config.primaryColor || '#0B5ED7' } : {}}
               >
                 <Icon 
                   className={`w-4 h-4 transition-transform group-hover:scale-110 shrink-0 ${
-                    isActive ? 'text-white' : ''
+                    isActive ? 'text-[#7DDACB]' : 'text-[#7DDACB]'
                   }`} 
-                  style={!isActive ? { color: item.accentColor } : {}}
                 />
                 
                 <span className="hidden md:inline font-bold">
@@ -226,8 +202,8 @@ export const Navigation: React.FC<NavigationProps> = ({
                   <span 
                     className={`px-1.5 py-0.2 text-[10px] font-black rounded-full ml-1 ${
                       isActive 
-                        ? 'bg-white text-blue-700' 
-                        : 'bg-rose-500 text-white animate-pulse'
+                        ? 'bg-[#7DDACB] text-[#151E3A]' 
+                        : 'bg-[#7DDACB] text-[#151E3A] animate-pulse'
                     }`}
                   >
                     {item.badge}

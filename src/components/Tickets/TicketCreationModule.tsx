@@ -502,19 +502,19 @@ export const TicketCreationModule: React.FC<TicketCreationModuleProps> = ({
 
       </div>
 
-      {/* MODAL: Ticket Emitido Exitosamente con Vista Imprimible */}
+      {/* MODAL: Ticket Emitido Exitosamente con Vista Imprimible (#151E3A, #1F2952, #7DDACB, #F4F4F4, #395AFF) */}
       {issuedTicket && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-          <div className="bg-white rounded-xl shadow-2xl border border-slate-300 max-w-sm w-full overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#151E3A]/60 backdrop-blur-xs">
+          <div className="bg-white rounded-xl shadow-2xl border-2 border-[#1F2952] max-w-sm w-full overflow-hidden">
             
-            <div className="p-4 bg-slate-900 text-white flex items-center justify-between no-print">
+            <div className="p-4 bg-[#151E3A] border-b-2 border-[#7DDACB] text-white flex items-center justify-between no-print">
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <CheckCircle2 className="w-4 h-4 text-[#7DDACB]" />
                 <span className="text-xs font-bold uppercase tracking-wider">Ticket Emitido</span>
               </div>
               <button 
                 onClick={() => setIssuedTicket(null)}
-                className="text-slate-400 hover:text-white p-1"
+                className="text-[#F4F4F4] hover:text-white p-1"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -523,83 +523,89 @@ export const TicketCreationModule: React.FC<TicketCreationModuleProps> = ({
             {/* Printable Ticket Slip */}
             <div className="p-6 space-y-4 text-xs font-mono printable-area">
               
-              <div className="text-center border-b border-dashed border-slate-300 pb-3">
-                <h2 className="text-base font-black tracking-tight text-slate-900 font-sans">
-                  {config.clinicName}
+              <div className="text-center border-b-2 border-[#151E3A] pb-3">
+                <div className="w-28 h-12 mx-auto mb-2 rounded-lg overflow-hidden border-2 border-[#7DDACB] bg-[#F4F4F4] flex items-center justify-center shadow-xs">
+                  <img
+                    src="/assets/aistudio/siglas_atp.jpg"
+                    alt="Siglas Oficiales"
+                    className="w-full h-full object-cover object-center scale-[1.55]"
+                  />
+                </div>
+                <h2 className="text-base font-black tracking-tight text-[#151E3A] font-sans">
+                  {config.clinicName.replace(/\bATP\b/gi, '').trim() || 'MEDICAL'}
                 </h2>
-                <p className="text-[11px] text-slate-500 font-sans">{config.branchName}</p>
-                <div className="mt-3 text-3xl font-black tracking-widest text-slate-900 bg-slate-100 py-2 rounded-lg border border-slate-200">
+                <p className="text-[11px] text-[#1F2952] font-sans font-bold">{config.branchName}</p>
+                <div className="mt-3 text-3xl font-black tracking-widest text-white bg-[#151E3A] py-2.5 rounded-lg border-b-4 border-[#7DDACB]">
                   {issuedTicket.ticketNumber}
                 </div>
-                <p className="text-[10px] text-slate-400 font-mono mt-1">
+                <p className="text-[10px] text-[#1F2952] font-mono mt-1.5">
                   {new Date(issuedTicket.admissionTime).toLocaleString('es-ES')}
                 </p>
               </div>
 
-              <div className="space-y-1.5 text-slate-700">
+              <div className="space-y-1.5 text-[#151E3A] bg-[#F4F4F4] p-3 rounded-lg border border-[#1F2952]/15">
                 <div className="flex justify-between">
-                  <span className="text-slate-500">PACIENTE:</span>
-                  <span className="font-bold text-slate-900 text-right">{issuedTicket.patientName}</span>
+                  <span className="text-[#1F2952] font-semibold">PACIENTE:</span>
+                  <span className="font-bold text-[#151E3A] text-right">{issuedTicket.patientName}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">CÉDULA / DNI:</span>
-                  <span className="font-bold">{issuedTicket.patientDni}</span>
+                  <span className="text-[#1F2952] font-semibold">CÉDULA / DNI:</span>
+                  <span className="font-bold text-[#395AFF]">{issuedTicket.patientDni}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">EDAD:</span>
+                  <span className="text-[#1F2952] font-semibold">EDAD:</span>
                   <span>{issuedTicket.patientAge} años</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">TELÉFONO:</span>
+                  <span className="text-[#1F2952] font-semibold">TELÉFONO:</span>
                   <span>{issuedTicket.patientPhone}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">CORREO:</span>
+                  <span className="text-[#1F2952] font-semibold">CORREO:</span>
                   <span className="truncate max-w-[180px]">{issuedTicket.patientEmail}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">DIRECCIÓN:</span>
+                  <span className="text-[#1F2952] font-semibold">DIRECCIÓN:</span>
                   <span className="truncate max-w-[180px]">{issuedTicket.patientAddress}</span>
                 </div>
-                <div className="flex justify-between border-t border-slate-200 pt-1.5">
-                  <span className="text-slate-500">ESPECIALIDAD:</span>
-                  <span className="font-bold text-sky-700">{issuedTicket.specialty}</span>
+                <div className="flex justify-between border-t border-[#1F2952]/20 pt-1.5">
+                  <span className="text-[#1F2952] font-semibold">ESPECIALIDAD:</span>
+                  <span className="font-bold text-[#395AFF]">{issuedTicket.specialty}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">CONSULTORIO:</span>
-                  <span className="font-bold">{issuedTicket.room}</span>
+                  <span className="text-[#1F2952] font-semibold">CONSULTORIO:</span>
+                  <span className="font-bold text-[#151E3A]">{issuedTicket.room}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">MÉDICO:</span>
-                  <span>{issuedTicket.doctorName}</span>
+                  <span className="text-[#1F2952] font-semibold">MÉDICO:</span>
+                  <span className="font-bold">{issuedTicket.doctorName}</span>
                 </div>
               </div>
 
-              <div className="text-center text-[10px] text-slate-400 pt-3 border-t border-dashed border-slate-300 font-sans">
-                <p>Por favor tome asiento en la sala de espera.</p>
+              <div className="text-center text-[10px] text-[#1F2952] pt-3 border-t border-dashed border-[#1F2952]/40 font-sans">
+                <p className="font-semibold">Por favor tome asiento en la sala de espera.</p>
                 <p className="mt-0.5">Su número de ticket aparecerá en pantalla cuando sea llamado.</p>
               </div>
 
             </div>
 
             {/* Actions */}
-            <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-2 no-print">
+            <div className="p-4 bg-[#F4F4F4] border-t border-[#1F2952]/15 flex items-center justify-between gap-2 no-print">
               <button
                 onClick={() => {
                   setIssuedTicket(null);
                   onNavigateToWaitingRoom();
                 }}
-                className="px-3 py-1.5 text-xs text-sky-700 hover:bg-sky-50 rounded-md font-semibold"
+                className="px-3 py-1.5 text-xs text-[#151E3A] hover:bg-white rounded-md font-bold border border-[#1F2952]/20"
               >
                 Ir a Pacientes en Sala
               </button>
 
               <button
                 onClick={() => window.print()}
-                className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold text-white rounded-md shadow-xs hover:opacity-95"
-                style={{ backgroundColor: config.primaryColor }}
+                className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold text-white bg-[#395AFF] rounded-md shadow-xs hover:brightness-110"
               >
-                <Printer className="w-3.5 h-3.5" />
+                <Printer className="w-3.5 h-3.5 text-[#7DDACB]" />
                 <span>Imprimir Ticket</span>
               </button>
             </div>

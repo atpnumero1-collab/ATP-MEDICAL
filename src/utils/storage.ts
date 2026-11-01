@@ -40,13 +40,16 @@ export const loadStoredData = () => {
     if (
       loadedConfig.activePresetId === 'atp-classic' || 
       loadedConfig.activePresetId === 'atp-venezuela' || 
+      loadedConfig.activePresetId === 'atp-vivos' ||
       loadedConfig.primaryColor === '#002B49' ||
+      loadedConfig.primaryColor === '#0B5ED7' ||
       !loadedConfig.primaryColor
     ) {
       loadedConfig.primaryColor = INITIAL_CONFIG.primaryColor;
       loadedConfig.accentColor = INITIAL_CONFIG.accentColor;
       loadedConfig.secondaryColor = INITIAL_CONFIG.secondaryColor;
-      loadedConfig.activePresetId = 'atp-vivos';
+      loadedConfig.activePresetId = 'atp-oficial-pdf';
+      saveToStorage('CONFIG', loadedConfig);
     }
 
     let loadedDoctors = doctorsRaw ? (JSON.parse(doctorsRaw) as Doctor[]) : INITIAL_DOCTORS;

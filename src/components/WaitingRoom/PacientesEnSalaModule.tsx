@@ -186,9 +186,15 @@ export const PacientesEnSalaModule: React.FC<PacientesEnSalaModuleProps> = ({
 
         {/* Centered Title Lockup with Medical Assistance Emblem */}
         <div className="text-center space-y-2 relative z-10 py-1">
-          <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-slate-50 border border-slate-200 text-[10px] font-bold tracking-widest text-slate-600 uppercase font-mono">
-            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: config.accentColor }} />
-            <span>ATP MEDICAL VENEZUELA · MONITOREO CLÍNICO ASISTENCIAL</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-50 border border-slate-200 text-[10px] font-bold tracking-widest text-slate-600 uppercase font-mono">
+            <div className="w-12 h-4 rounded overflow-hidden border border-[#7DDACB] bg-[#F4F4F4] inline-flex items-center justify-center shrink-0">
+              <img
+                src="/assets/aistudio/siglas_atp.jpg"
+                alt="Siglas Oficiales"
+                className="w-full h-full object-cover object-center scale-[1.55]"
+              />
+            </div>
+            <span>MEDICAL VENEZUELA · MONITOREO CLÍNICO ASISTENCIAL</span>
             <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: config.secondaryColor }} />
           </div>
 
@@ -799,83 +805,91 @@ export const PacientesEnSalaModule: React.FC<PacientesEnSalaModuleProps> = ({
         </div>
       )}
 
-      {/* MODAL: Comprobante Imprimible de Ticket */}
+      {/* MODAL: Comprobante Imprimible de Ticket con Logo y Colores Oficiales */}
       {reprintTicket && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-          <div className="bg-white rounded-xl shadow-2xl border border-slate-300 max-w-sm w-full overflow-hidden text-slate-900">
-            <div className="p-4 bg-slate-900 text-white flex items-center justify-between no-print">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#151E3A]/60 backdrop-blur-xs">
+          <div className="bg-white rounded-xl shadow-2xl border-2 border-[#1F2952] max-w-sm w-full overflow-hidden text-[#151E3A]">
+            <div className="p-4 bg-[#151E3A] border-b-2 border-[#7DDACB] text-white flex items-center justify-between no-print">
               <span className="text-xs font-bold uppercase tracking-wider">Ticket de Atención</span>
-              <button onClick={() => setReprintTicket(null)} className="text-slate-400 hover:text-white p-1">
+              <button onClick={() => setReprintTicket(null)} className="text-[#F4F4F4] hover:text-white p-1">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <div className="p-6 space-y-4 text-xs font-mono printable-area">
-              <div className="text-center border-b border-dashed border-slate-300 pb-3">
-                <h2 className="text-base font-black tracking-tight text-slate-900 font-sans">{config.clinicName}</h2>
-                <p className="text-[11px] text-slate-500 font-sans">{config.address}</p>
-                <p className="text-[10px] text-slate-400 font-mono mt-0.5">{config.phone}</p>
-                <div className="mt-3 text-3xl font-black tracking-widest text-slate-900 bg-slate-100 py-2 rounded-lg border border-slate-200">
+              <div className="text-center border-b-2 border-[#151E3A] pb-3">
+                <div className="w-28 h-12 mx-auto mb-2 rounded-lg overflow-hidden border-2 border-[#7DDACB] bg-[#F4F4F4] flex items-center justify-center shadow-xs">
+                  <img
+                    src="/assets/aistudio/siglas_atp.jpg"
+                    alt="Siglas Oficiales"
+                    className="w-full h-full object-cover object-center scale-[1.55]"
+                  />
+                </div>
+                <h2 className="text-base font-black tracking-tight text-[#151E3A] font-sans">
+                  {config.clinicName.replace(/\bATP\b/gi, '').trim() || 'MEDICAL'}
+                </h2>
+                <p className="text-[11px] text-[#1F2952] font-sans font-bold">{config.address}</p>
+                <p className="text-[10px] text-[#395AFF] font-mono font-bold mt-0.5">{config.phone}</p>
+                <div className="mt-3 text-3xl font-black tracking-widest text-white bg-[#151E3A] py-2 rounded-lg border-b-4 border-[#7DDACB]">
                   {reprintTicket.ticketNumber}
                 </div>
-                <p className="text-[10px] text-slate-400 font-mono mt-1">
+                <p className="text-[10px] text-[#1F2952] font-mono mt-1">
                   {new Date(reprintTicket.admissionTime).toLocaleString('es-ES')}
                 </p>
               </div>
 
-              <div className="space-y-1.5 text-slate-700">
+              <div className="space-y-1.5 text-[#151E3A] bg-[#F4F4F4] p-3 rounded-lg border border-[#1F2952]/15">
                 <div className="flex justify-between">
-                  <span className="text-slate-500">ESTADO:</span>
-                  <span className="font-bold text-slate-900 uppercase">{reprintTicket.status.replace('_', ' ')}</span>
+                  <span className="text-[#1F2952] font-semibold">ESTADO:</span>
+                  <span className="font-bold text-[#151E3A] uppercase">{reprintTicket.status.replace('_', ' ')}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">PACIENTE:</span>
-                  <span className="font-bold text-slate-900 text-right">{reprintTicket.patientName}</span>
+                  <span className="text-[#1F2952] font-semibold">PACIENTE:</span>
+                  <span className="font-bold text-[#151E3A] text-right">{reprintTicket.patientName}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">CÉDULA:</span>
-                  <span className="font-bold">{reprintTicket.patientDni}</span>
+                  <span className="text-[#1F2952] font-semibold">CÉDULA:</span>
+                  <span className="font-bold text-[#395AFF]">{reprintTicket.patientDni}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">EDAD:</span>
+                  <span className="text-[#1F2952] font-semibold">EDAD:</span>
                   <span>{reprintTicket.patientAge} años</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">TELÉFONO:</span>
+                  <span className="text-[#1F2952] font-semibold">TELÉFONO:</span>
                   <span>{reprintTicket.patientPhone}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">CORREO:</span>
+                  <span className="text-[#1F2952] font-semibold">CORREO:</span>
                   <span className="truncate max-w-[170px]">{reprintTicket.patientEmail}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">DIRECCIÓN:</span>
+                  <span className="text-[#1F2952] font-semibold">DIRECCIÓN:</span>
                   <span className="truncate max-w-[170px]">{reprintTicket.patientAddress}</span>
                 </div>
-                <div className="flex justify-between border-t border-slate-200 pt-1.5">
-                  <span className="text-slate-500">ESPECIALIDAD:</span>
-                  <span className="font-bold text-sky-700">{reprintTicket.specialty}</span>
+                <div className="flex justify-between border-t border-[#1F2952]/20 pt-1.5">
+                  <span className="text-[#1F2952] font-semibold">ESPECIALIDAD:</span>
+                  <span className="font-bold text-[#395AFF]">{reprintTicket.specialty}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">CONSULTORIO:</span>
-                  <span className="font-bold">{reprintTicket.room}</span>
+                  <span className="text-[#1F2952] font-semibold">CONSULTORIO:</span>
+                  <span className="font-bold text-[#151E3A]">{reprintTicket.room}</span>
                 </div>
               </div>
             </div>
 
-            <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2 no-print">
+            <div className="p-4 bg-[#F4F4F4] border-t border-[#1F2952]/15 flex items-center justify-end gap-2 no-print">
               <button
                 onClick={() => setReprintTicket(null)}
-                className="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-md"
+                className="px-3 py-1.5 text-xs text-[#151E3A] hover:bg-white rounded-md font-bold border border-[#1F2952]/20"
               >
                 Cerrar
               </button>
               <button
                 onClick={() => window.print()}
-                className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold text-white rounded-md shadow-xs"
-                style={{ backgroundColor: config.primaryColor }}
+                className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold text-white bg-[#395AFF] rounded-md shadow-xs hover:brightness-110"
               >
-                <Printer className="w-3.5 h-3.5" />
+                <Printer className="w-3.5 h-3.5 text-[#7DDACB]" />
                 <span>Imprimir</span>
               </button>
             </div>

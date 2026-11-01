@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Doctor, Appointment, Patient, ClinicConfig, AppointmentType } from '../../types';
 import { normalizeDayStr, getDayInfo } from '../Appointments/AppointmentsModule';
+import { buildWhatsAppUrl } from '../../utils/whatsapp';
 import { 
   Calendar, 
   Clock, 
@@ -254,11 +255,11 @@ export const PatientBookingPortal: React.FC<PatientBookingPortalProps> = ({
     }
   };
 
-  // WhatsApp share link for the patient voucher
-  const handleShareVoucherWhatsApp = () => {
-    if (!selectedDoctor) return;
-    const text = encodeURIComponent(
-      `*COMPROBANTE DE CITA MÉDICA - ATP MEDICAL*\n` +
+  // WhatsApp share URL for the patient voucher
+  const getVoucherWhatsAppUrl = () => {
+    if (!selectedDoctor) return '#';
+    const text =
+      `*COMPROBANTE DE CITA MÉDICA - ${config.clinicName}*\n` +
       `Código: *${bookedTicketCode}*\n` +
       `Paciente: *${patientFullName}* (${patientDniType}-${patientDniNumber})\n` +
       `Especialista: *${selectedDoctor.name}*\n` +
@@ -266,11 +267,10 @@ export const PatientBookingPortal: React.FC<PatientBookingPortalProps> = ({
       `Consultorio: *${selectedDoctor.room}*\n` +
       `Fecha: *${selectedDate}*\n` +
       `Hora: *${selectedTime}*\n` +
-      `Ubicación: *Piso 1, Oficina 5, C.C. Parque Humboldt, Caracas*\n` +
+      `Ubicación: *${config.address}*\n` +
       `Teléfono: *${config.phone}*\n\n` +
-      `_Por favor presentarse 15 minutos antes de su hora pautada._`
-    );
-    window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+      `_Por favor presentarse 15 minutos antes de su hora pautada._`;
+    return buildWhatsAppUrl(text, patientPhone);
   };
 
   // Google Calendar Link
@@ -300,31 +300,24 @@ export const PatientBookingPortal: React.FC<PatientBookingPortalProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-sky-50/20 to-slate-100 text-slate-800 flex flex-col antialiased">
+    <div className="min-h-screen bg-[#F4F4F4] text-[#151E3A] flex flex-col antialiased">
       
-      {/* Top Patient Bar */}
-      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
+      {/* Top Patient Bar (#151E3A & #7DDACB) */}
+      <header className="sticky top-0 z-30 bg-[#151E3A] text-white border-b-2 border-[#7DDACB] shadow-md">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div 
-              className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-lg shadow-sm"
-              style={{ backgroundColor: config.primaryColor }}
+              className="w-28 sm:w-32 h-11 rounded-xl overflow-hidden border-2 border-[#7DDACB] flex items-center justify-center bg-[#F4F4F4] text-[#151E3A] font-black text-lg shadow-sm shrink-0"
             >
-              ATP
+              <img 
+                src="/assets/aistudio/siglas_atp.jpg" 
+                alt="Logo Oficial ATP" 
+                className="w-full h-full object-cover object-center scale-[1.55]"
+              />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-slate-900 tracking-tight text-base sm:text-lg">
-                  {config.clinicName}
-                </span>
-                <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-300">
-                  Autogestión en Línea
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 font-medium">
-                {config.branchName}
-              </p>
-            </div>
+            <span className="bg-[#7DDACB] text-[#151E3A] text-[10px] font-extrabold px-2.5 py-1 rounded-full hidden sm:inline-block">
+              Autogestión en Línea
+            </span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -332,60 +325,62 @@ export const PatientBookingPortal: React.FC<PatientBookingPortalProps> = ({
               href={`https://wa.me/584143651970?text=${encodeURIComponent('Hola ATP Medical, tengo una consulta sobre mi cita médica.')}`}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100 transition-colors shadow-xs"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-extrabold bg-[#7DDACB] text-[#151E3A] hover:brightness-105 transition-all shadow-xs"
             >
-              <Phone className="w-3.5 h-3.5 text-emerald-600" />
+              <Phone className="w-3.5 h-3.5 text-[#151E3A]" />
               <span>Ayuda WhatsApp</span>
             </a>
           </div>
         </div>
 
-        {/* Wizard Progress Bar */}
-        <div className="max-w-3xl mx-auto px-4 pb-2.5 pt-1">
-          <div className="grid grid-cols-3 gap-2 text-xs font-medium text-center">
-            <button
-              onClick={() => step > 1 && setStep(1)}
-              disabled={step === 4}
-              className={`py-1.5 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-                step === 1 
-                  ? 'bg-sky-600 text-white font-bold shadow-xs' 
-                  : step > 1 
-                  ? 'bg-slate-200 text-slate-700' 
-                  : 'bg-slate-100 text-slate-400'
-              }`}
-            >
-              <span className="w-4 h-4 rounded-full bg-black/15 inline-flex items-center justify-center text-[10px]">1</span>
-              <span>Médico</span>
-            </button>
+        {/* Wizard Progress Bar (#1F2952 & #395AFF) */}
+        <div className="bg-[#1F2952] border-t border-[#7DDACB]/20">
+          <div className="max-w-3xl mx-auto px-4 py-2">
+            <div className="grid grid-cols-3 gap-2 text-xs font-medium text-center">
+              <button
+                onClick={() => step > 1 && setStep(1)}
+                disabled={step === 4}
+                className={`py-1.5 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                  step === 1 
+                    ? 'bg-[#395AFF] text-white font-bold shadow-xs ring-1 ring-[#7DDACB]' 
+                    : step > 1 
+                    ? 'bg-[#151E3A] text-[#7DDACB]' 
+                    : 'bg-[#151E3A]/50 text-[#F4F4F4]/50'
+                }`}
+              >
+                <span className="w-4 h-4 rounded-full bg-black/20 inline-flex items-center justify-center text-[10px]">1</span>
+                <span>Médico</span>
+              </button>
 
-            <button
-              onClick={() => selectedDoctor && step > 2 && setStep(2)}
-              disabled={!selectedDoctor || step === 4}
-              className={`py-1.5 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-                step === 2 
-                  ? 'bg-sky-600 text-white font-bold shadow-xs' 
-                  : step > 2 
-                  ? 'bg-slate-200 text-slate-700' 
-                  : 'bg-slate-100 text-slate-400'
-              }`}
-            >
-              <span className="w-4 h-4 rounded-full bg-black/15 inline-flex items-center justify-center text-[10px]">2</span>
-              <span>Fecha y Turno</span>
-            </button>
+              <button
+                onClick={() => selectedDoctor && step > 2 && setStep(2)}
+                disabled={!selectedDoctor || step === 4}
+                className={`py-1.5 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                  step === 2 
+                    ? 'bg-[#395AFF] text-white font-bold shadow-xs ring-1 ring-[#7DDACB]' 
+                    : step > 2 
+                    ? 'bg-[#151E3A] text-[#7DDACB]' 
+                    : 'bg-[#151E3A]/50 text-[#F4F4F4]/50'
+                }`}
+              >
+                <span className="w-4 h-4 rounded-full bg-black/20 inline-flex items-center justify-center text-[10px]">2</span>
+                <span>Fecha y Turno</span>
+              </button>
 
-            <button
-              disabled={!selectedDate || !selectedTime || step === 4}
-              className={`py-1.5 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-                step === 3 
-                  ? 'bg-sky-600 text-white font-bold shadow-xs' 
-                  : step === 4 
-                  ? 'bg-emerald-600 text-white font-bold' 
-                  : 'bg-slate-100 text-slate-400'
-              }`}
-            >
-              <span className="w-4 h-4 rounded-full bg-black/15 inline-flex items-center justify-center text-[10px]">3</span>
-              <span>Confirmación</span>
-            </button>
+              <button
+                disabled={!selectedDate || !selectedTime || step === 4}
+                className={`py-1.5 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                  step === 3 
+                    ? 'bg-[#395AFF] text-white font-bold shadow-xs ring-1 ring-[#7DDACB]' 
+                    : step === 4 
+                    ? 'bg-[#7DDACB] text-[#151E3A] font-extrabold' 
+                    : 'bg-[#151E3A]/50 text-[#F4F4F4]/50'
+                }`}
+              >
+                <span className="w-4 h-4 rounded-full bg-black/20 inline-flex items-center justify-center text-[10px]">3</span>
+                <span>Confirmación</span>
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -394,15 +389,15 @@ export const PatientBookingPortal: React.FC<PatientBookingPortalProps> = ({
       <main className="max-w-3xl w-full mx-auto px-4 py-6 flex-1">
         
         {/* Banner with Doctor Notice */}
-        <div className="mb-6 p-4 rounded-2xl bg-white border border-sky-100 shadow-sm flex items-start gap-3.5">
-          <div className="p-2.5 rounded-xl bg-sky-50 text-sky-600 shrink-0">
+        <div className="mb-6 p-4 rounded-2xl bg-white border-l-4 border-[#395AFF] border border-[#1F2952]/15 shadow-sm flex items-start gap-3.5">
+          <div className="p-2.5 rounded-xl bg-[#151E3A] text-[#7DDACB] shrink-0">
             <Sparkles className="w-5 h-5" />
           </div>
           <div className="text-xs">
-            <h2 className="font-bold text-slate-900 text-sm">
+            <h2 className="font-bold text-[#151E3A] text-sm">
               Agenda tu cita médica oficial en ATP Medical
             </h2>
-            <p className="text-slate-600 mt-0.5 leading-relaxed">
+            <p className="text-[#1F2952] mt-0.5 leading-relaxed">
               Elige tu especialista, selecciona uno de los días asignados en su cronograma oficial y reserva tu cupo en tiempo real.
             </p>
           </div>
@@ -920,16 +915,25 @@ export const PatientBookingPortal: React.FC<PatientBookingPortalProps> = ({
                 className="p-5 text-white flex items-center justify-between"
                 style={{ backgroundColor: config.primaryColor }}
               >
-                <div>
-                  <span className="text-[10px] uppercase font-bold tracking-widest text-sky-200">
-                    Comprobante Digital Oficial
-                  </span>
-                  <h3 className="text-lg font-black tracking-tight">
-                    ATP MEDICAL CARACAS
-                  </h3>
-                  <p className="text-xs text-slate-200 mt-0.5">
-                    {config.branchName}
-                  </p>
+                <div className="flex items-center gap-3">
+                  <div className="w-20 h-9 rounded-lg overflow-hidden border border-[#7DDACB] bg-[#F4F4F4] flex items-center justify-center shrink-0">
+                    <img
+                      src="/assets/aistudio/siglas_atp.jpg"
+                      alt="Siglas Oficiales"
+                      className="w-full h-full object-cover object-center scale-[1.55]"
+                    />
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-bold tracking-widest text-sky-200 block">
+                      Comprobante Digital Oficial
+                    </span>
+                    <h3 className="text-lg font-black tracking-tight">
+                      MEDICAL CARACAS
+                    </h3>
+                    <p className="text-xs text-slate-200 mt-0.5">
+                      {config.branchName}
+                    </p>
+                  </div>
                 </div>
                 <div className="text-right">
                   <span className="text-[10px] font-bold uppercase text-slate-200 block">
@@ -1032,14 +1036,15 @@ export const PatientBookingPortal: React.FC<PatientBookingPortalProps> = ({
 
               {/* Action Buttons */}
               <div className="p-4 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row gap-2.5">
-                <button
-                  type="button"
-                  onClick={handleShareVoucherWhatsApp}
-                  className="flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-colors"
+                <a
+                  href={getVoucherWhatsAppUrl()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-colors cursor-pointer"
                 >
                   <Share2 className="w-4 h-4" />
                   <span>Guardar Comprobante en mi WhatsApp</span>
-                </button>
+                </a>
 
                 <button
                   type="button"
@@ -1078,9 +1083,18 @@ export const PatientBookingPortal: React.FC<PatientBookingPortalProps> = ({
 
       {/* Footer */}
       <footer className="mt-auto border-t border-slate-200/80 bg-white py-4 text-xs text-slate-500 text-center">
-        <p className="font-semibold text-slate-700">
-          {config.clinicName} · {config.slogan}
-        </p>
+        <div className="flex items-center justify-center gap-2 mb-1">
+          <div className="w-16 h-6 rounded overflow-hidden border border-[#7DDACB] bg-[#F4F4F4] inline-flex items-center justify-center">
+            <img
+              src="/assets/aistudio/siglas_atp.jpg"
+              alt="Siglas Oficiales"
+              className="w-full h-full object-cover object-center scale-[1.55]"
+            />
+          </div>
+          <span className="font-semibold text-slate-700">
+            {config.clinicName.replace(/\bATP\b/gi, '').trim() || 'MEDICAL'} · {config.slogan}
+          </span>
+        </div>
         <p className="text-[11px] text-slate-400 mt-0.5">
           {config.address} · Atención telefónica: {config.phone}
         </p>

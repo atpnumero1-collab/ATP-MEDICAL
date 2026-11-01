@@ -7,6 +7,7 @@ import {
   VitalSigns 
 } from '../../types';
 import { calculateBmi } from '../../data/initialData';
+import { buildMedicalRecordWhatsAppMessage, buildWhatsAppUrl } from '../../utils/whatsapp';
 import { 
   FileText, 
   Search, 
@@ -269,43 +270,32 @@ export const MedicalRecordsModule: React.FC<MedicalRecordsModuleProps> = ({
     }, 250);
   };
 
-  // WhatsApp share of the medical report summary
-  const handleShareWhatsApp = (rec: MedicalRecord) => {
-    const text = encodeURIComponent(
-      `*INFORME MÉDICO - ATP MEDICAL*\n` +
-      `Sede: *${config.branchName}*\n` +
-      `Folio: *${rec.recordNumber}*\n` +
-      `Paciente: *${rec.patientName}* (C.I. ${rec.patientDni})\n` +
-      `Fecha: *${rec.date} ${rec.time}*\n` +
-      `Especialista: *${rec.doctorName}* (${rec.specialty})\n\n` +
-      `*Diagnóstico:* ${rec.diagnosis}\n\n` +
-      `*Tratamiento & Indicaciones:* ${rec.treatmentPlan || 'N/A'}\n\n` +
-      (rec.prescriptions ? `*Récipe / Medicamentos:* ${rec.prescriptions}\n\n` : '') +
-      (rec.nextFollowUpDate ? `*Próximo Control:* ${rec.nextFollowUpDate}\n\n` : '') +
-      `_ATP Medical - ${config.address}. Contacto: ${config.phone}_`
-    );
-    window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+  // WhatsApp share URL builder for the medical report summary (targets patient phone if available)
+  const getRecordWhatsAppUrl = (rec: MedicalRecord) => {
+    const patient = patients.find(p => p.id === rec.patientId || p.dni === rec.patientDni);
+    const message = buildMedicalRecordWhatsAppMessage(rec, config);
+    return buildWhatsAppUrl(message, patient?.phone);
   };
 
   return (
     <div className="space-y-6">
       
-      {/* Module Header - Vanguard Medical Records & Clinical Reports */}
-      <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
+      {/* Module Header - Official ATP Medical Colors (#151E3A, #1F2952, #7DDACB, #F4F4F4, #395AFF) */}
+      <div className="bg-white p-5 sm:p-6 rounded-2xl border-l-4 border-[#395AFF] border border-[#1F2952]/15 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
         <div className="flex items-start sm:items-center gap-3.5">
-          <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 text-white flex items-center justify-center shadow-md shrink-0">
+          <div className="w-11 h-11 rounded-xl bg-[#151E3A] border border-[#7DDACB] text-[#7DDACB] flex items-center justify-center shadow-md shrink-0">
             <FileText className="w-6 h-6" />
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-black text-[#151E3A] tracking-tight">
                 Historias Médicas & Informes Clínicos
               </h1>
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-200 font-mono">
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#1F2952] text-[#7DDACB] font-mono">
                 Expedientes Electrónicos
               </span>
             </div>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-[#1F2952]/80 mt-1">
               Gestión clínica integral por paciente, evolución diagnóstica CIE-10, prescripción e impresión oficial membretada en PDF.
             </p>
           </div>
@@ -315,9 +305,9 @@ export const MedicalRecordsModule: React.FC<MedicalRecordsModuleProps> = ({
           <button
             type="button"
             onClick={() => setIsQuickPatientModalOpen(true)}
-            className="px-3 py-2 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold text-xs flex items-center gap-1.5 transition-colors"
+            className="px-3 py-2 rounded-xl border border-[#1F2952]/25 text-[#151E3A] hover:bg-[#F4F4F4] font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
           >
-            <Plus className="w-4 h-4 text-slate-500" />
+            <Plus className="w-4 h-4 text-[#395AFF]" />
             <span>Nuevo Paciente</span>
           </button>
 
@@ -325,10 +315,9 @@ export const MedicalRecordsModule: React.FC<MedicalRecordsModuleProps> = ({
             <button
               type="button"
               onClick={handleOpenNewRecord}
-              className="px-4 py-2 rounded-xl text-white font-bold text-xs shadow-xs hover:opacity-95 transition-all flex items-center gap-1.5"
-              style={{ backgroundColor: config.accentColor }}
+              className="px-4 py-2 rounded-xl bg-[#395AFF] hover:brightness-110 text-white font-bold text-xs shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
             >
-              <FileText className="w-4 h-4" />
+              <FileText className="w-4 h-4 text-[#7DDACB]" />
               <span>+ Crear Informe Médico</span>
             </button>
           )}
@@ -600,14 +589,15 @@ export const MedicalRecordsModule: React.FC<MedicalRecordsModuleProps> = ({
                               <span>Ver / Imprimir PDF</span>
                             </button>
 
-                            <button
-                              type="button"
-                              onClick={() => handleShareWhatsApp(rec)}
-                              className="p-1 text-emerald-700 hover:bg-emerald-50 rounded-lg border border-emerald-200 transition-colors"
-                              title="Compartir resumen por WhatsApp"
+                            <a
+                              href={getRecordWhatsAppUrl(rec)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-1 text-emerald-700 hover:bg-emerald-50 rounded-lg border border-emerald-200 transition-colors inline-flex items-center justify-center"
+                              title="Enviar resumen de informe médico al WhatsApp del paciente"
                             >
                               <Share2 className="w-3.5 h-3.5" />
-                            </button>
+                            </a>
                           </div>
                         </div>
 
@@ -960,19 +950,19 @@ export const MedicalRecordsModule: React.FC<MedicalRecordsModuleProps> = ({
         </div>
       )}
 
-      {/* MODAL 2: Official Print / PDF Preview Modal */}
+      {/* MODAL 2: Official Print / PDF Preview Modal with Official ATP Medical Colors */}
       {viewingRecord && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
-          <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl border border-slate-300 overflow-hidden my-4 flex flex-col max-h-[92vh]">
+        <div className="fixed inset-0 z-50 bg-[#151E3A]/70 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+          <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl border-2 border-[#1F2952] overflow-hidden my-4 flex flex-col max-h-[92vh]">
             
             {/* Top Toolbar (Hidden on Print) */}
-            <div className="p-3.5 bg-slate-900 text-white flex items-center justify-between no-print print:hidden">
+            <div className="p-3.5 bg-[#151E3A] border-b-2 border-[#7DDACB] text-white flex items-center justify-between no-print print:hidden">
               <div className="flex items-center gap-2">
-                <Printer className="w-4 h-4 text-emerald-400" />
+                <Printer className="w-4 h-4 text-[#7DDACB]" />
                 <span className="font-bold text-xs">
                   Vista Previa de Impresión Oficial (PDF Membretado)
                 </span>
-                <span className="font-mono text-[10px] text-slate-300 bg-slate-800 px-2 py-0.5 rounded">
+                <span className="font-mono text-[10px] text-[#7DDACB] bg-[#1F2952] border border-[#7DDACB]/40 px-2 py-0.5 rounded">
                   {viewingRecord.recordNumber}
                 </span>
               </div>
@@ -981,118 +971,130 @@ export const MedicalRecordsModule: React.FC<MedicalRecordsModuleProps> = ({
                 <button
                   type="button"
                   onClick={handlePrint}
-                  className="px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all"
+                  className="px-3.5 py-1.5 rounded-lg bg-[#395AFF] hover:brightness-110 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
                 >
-                  <Printer className="w-3.5 h-3.5" />
+                  <Printer className="w-3.5 h-3.5 text-[#7DDACB]" />
                   <span>Imprimir en PDF</span>
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => handleShareWhatsApp(viewingRecord)}
-                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs flex items-center gap-1.5"
+                <a
+                  href={getRecordWhatsAppUrl(viewingRecord)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 rounded-lg bg-[#7DDACB] hover:brightness-105 text-[#151E3A] font-extrabold text-xs flex items-center gap-1.5"
+                  title="Enviar resumen por WhatsApp al paciente"
                 >
-                  <Share2 className="w-3.5 h-3.5" />
+                  <Share2 className="w-3.5 h-3.5 text-[#151E3A]" />
                   <span>WhatsApp</span>
-                </button>
+                </a>
 
                 <button
                   type="button"
                   onClick={() => setViewingRecord(null)}
-                  className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white"
+                  className="p-1 rounded-lg hover:bg-[#1F2952] text-[#F4F4F4] hover:text-white cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
             </div>
 
-            {/* Print Document Body (Membretado con Logo y Dirección) */}
-            <div id="printable-medical-report" className="printable-area p-8 sm:p-10 space-y-6 overflow-y-auto bg-white text-slate-900 font-sans print:p-0 print:m-0">
-
+            {/* Print Document Body (Membretado con Logo, Dirección y Colores Oficiales #151E3A, #1F2952, #7DDACB, #F4F4F4, #395AFF) */}
+            <div id="printable-medical-report" className="printable-area p-8 sm:p-10 space-y-5 overflow-y-auto bg-white text-[#151E3A] font-sans print:p-6 print:m-0">
               
-              {/* Institutional Header with Logo & Official Address */}
-              <div className="border-b-2 border-slate-900 pb-4 flex items-start justify-between gap-4">
+              {/* Top Corporate Color Bar (#151E3A, #1F2952, #7DDACB, #395AFF) */}
+              <div className="h-2.5 w-full rounded-full overflow-hidden flex">
+                <div className="flex-1 bg-[#151E3A]" />
+                <div className="flex-1 bg-[#1F2952]" />
+                <div className="flex-1 bg-[#7DDACB]" />
+                <div className="flex-1 bg-[#395AFF]" />
+              </div>
+
+              {/* Institutional Header with Official Siglas & Address */}
+              <div className="bg-[#151E3A] text-white p-5 rounded-xl border-b-4 border-[#7DDACB] flex items-start justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <div 
-                    className="w-16 h-16 rounded-xl flex items-center justify-center text-white font-black text-2xl shadow-sm shrink-0"
-                    style={{ backgroundColor: config.primaryColor }}
+                    className="w-32 h-14 rounded-xl overflow-hidden border-2 border-[#7DDACB] flex items-center justify-center bg-[#F4F4F4] text-[#151E3A] font-black text-xl shadow-md shrink-0"
                   >
-                    ATP
+                    <img 
+                      src="/assets/aistudio/siglas_atp.jpg" 
+                      alt="Siglas Oficiales" 
+                      className="w-full h-full object-cover object-center scale-[1.55]"
+                    />
                   </div>
                   <div>
-                    <h1 className="text-xl font-black text-slate-900 tracking-tight leading-tight">
-                      {config.clinicName}
+                    <h1 className="text-xl font-black text-white tracking-tight leading-tight">
+                      {config.clinicName.replace(/\bATP\b/gi, '').trim() || 'MEDICAL'}
                     </h1>
-                    <p className="text-xs font-bold text-sky-800 uppercase tracking-wide">
+                    <p className="text-xs font-bold text-[#7DDACB] uppercase tracking-wide mt-0.5">
                       {config.slogan}
                     </p>
-                    <div className="text-[11px] text-slate-600 mt-1 space-y-0.5 leading-snug">
-                      <p className="flex items-center gap-1 font-medium">
-                        <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                    <div className="text-[11px] text-[#F4F4F4] mt-1.5 space-y-0.5 leading-snug">
+                      <p className="flex items-center gap-1.5 font-medium">
+                        <MapPin className="w-3.5 h-3.5 text-[#7DDACB] shrink-0" />
                         <span>{config.address}</span>
                       </p>
                       <p className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-slate-800">Tlf: {config.phone}</span>
-                        <span>·</span>
+                        <span className="font-mono font-bold text-[#7DDACB]">Tlf: {config.phone}</span>
+                        <span className="text-[#7DDACB]">·</span>
                         <span>{config.email}</span>
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="text-right shrink-0">
-                  <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 block">
+                <div className="text-right shrink-0 bg-[#1F2952] px-3.5 py-2.5 rounded-lg border border-[#7DDACB]/40">
+                  <span className="text-[10px] uppercase font-bold tracking-widest text-[#7DDACB] block">
                     INFORME MÉDICO
                   </span>
-                  <span className="font-mono font-extrabold text-sm text-slate-900 block">
+                  <span className="font-mono font-extrabold text-sm text-white block mt-0.5">
                     {viewingRecord.recordNumber}
                   </span>
-                  <span className="text-[11px] text-slate-500 font-mono mt-1 block">
+                  <span className="text-[11px] text-[#F4F4F4] font-mono mt-1 block">
                     Fecha: {viewingRecord.date}
                   </span>
-                  <span className="text-[11px] text-slate-500 font-mono block">
+                  <span className="text-[11px] text-[#7DDACB] font-mono block">
                     Hora: {viewingRecord.time} hrs
                   </span>
                 </div>
               </div>
 
-              {/* Patient Identification Card */}
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              {/* Patient Identification Card (#F4F4F4 with #151E3A & #395AFF) */}
+              <div className="bg-[#F4F4F4] p-4 rounded-xl border-l-4 border-[#395AFF] border border-[#1F2952]/15 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Paciente</span>
-                  <span className="font-bold text-slate-900 text-sm block">{viewingRecord.patientName}</span>
+                  <span className="text-[10px] text-[#1F2952] uppercase font-bold block">Paciente</span>
+                  <span className="font-extrabold text-[#151E3A] text-sm block">{viewingRecord.patientName}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Cédula de Identidad</span>
-                  <span className="font-mono font-bold text-slate-900 text-sm block">{viewingRecord.patientDni}</span>
+                  <span className="text-[10px] text-[#1F2952] uppercase font-bold block">Cédula de Identidad</span>
+                  <span className="font-mono font-extrabold text-[#395AFF] text-sm block">{viewingRecord.patientDni}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Edad / Sexo</span>
-                  <span className="font-medium text-slate-800">
+                  <span className="text-[10px] text-[#1F2952] uppercase font-bold block">Edad / Sexo</span>
+                  <span className="font-bold text-[#151E3A]">
                     {viewingRecord.patientAge ? `${viewingRecord.patientAge} años` : 'N/A'} · {viewingRecord.patientGender || ''}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Teléfono</span>
-                  <span className="font-mono text-slate-800">{viewingRecord.patientPhone || config.phone}</span>
+                  <span className="text-[10px] text-[#1F2952] uppercase font-bold block">Teléfono</span>
+                  <span className="font-mono font-bold text-[#151E3A]">{viewingRecord.patientPhone || config.phone}</span>
                 </div>
               </div>
 
-              {/* Treating Specialist Banner */}
-              <div className="px-4 py-2.5 rounded-lg bg-sky-50/70 border border-sky-200 text-xs flex items-center justify-between">
+              {/* Treating Specialist Banner (#1F2952 with #7DDACB) */}
+              <div className="px-4 py-3 rounded-xl bg-[#1F2952] text-white border-l-4 border-[#7DDACB] text-xs flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] text-sky-800 font-bold uppercase tracking-wide block">
+                  <span className="text-[10px] text-[#7DDACB] font-bold uppercase tracking-wide block">
                     Médico Especialista Tratante
                   </span>
-                  <span className="font-bold text-slate-900 text-sm">
+                  <span className="font-extrabold text-white text-sm">
                     {viewingRecord.doctorName}
                   </span>
                 </div>
                 <div className="text-right">
-                  <span className="font-bold text-sky-800 uppercase text-xs block">
+                  <span className="font-extrabold text-[#7DDACB] uppercase text-xs block">
                     {viewingRecord.specialty}
                   </span>
-                  <span className="text-[11px] text-slate-500">
+                  <span className="text-[11px] text-[#F4F4F4]">
                     {viewingRecord.room || 'Consultorio ATP'}
                   </span>
                 </div>
@@ -1103,57 +1105,59 @@ export const MedicalRecordsModule: React.FC<MedicalRecordsModuleProps> = ({
                 
                 {/* 1. Motivo de Consulta & Anamnesis */}
                 <div className="space-y-1">
-                  <h4 className="font-bold text-slate-900 uppercase text-[11px] tracking-wider border-b border-slate-200 pb-1">
-                    1. Motivo de Consulta & Enfermedad Actual
+                  <h4 className="font-extrabold text-[#151E3A] uppercase text-[11px] tracking-wider border-b-2 border-[#395AFF]/30 pb-1 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-[#395AFF] inline-block" />
+                    <span>1. Motivo de Consulta & Enfermedad Actual</span>
                   </h4>
-                  <p className="text-slate-800 pt-0.5">
+                  <p className="text-[#151E3A] pt-1">
                     <b>Motivo:</b> {viewingRecord.chiefComplaint}
                   </p>
                   {viewingRecord.currentIllness && (
-                    <p className="text-slate-700 pt-0.5 whitespace-pre-line">
+                    <p className="text-[#1F2952] pt-0.5 whitespace-pre-line">
                       {viewingRecord.currentIllness}
                     </p>
                   )}
                 </div>
 
-                {/* 2. Signos Vitales */}
+                {/* 2. Signos Vitales (#F4F4F4) */}
                 {viewingRecord.vitals && (
                   <div className="space-y-1.5">
-                    <h4 className="font-bold text-slate-900 uppercase text-[11px] tracking-wider border-b border-slate-200 pb-1">
-                      2. Signos Vitales al Momento de la Atención
+                    <h4 className="font-extrabold text-[#151E3A] uppercase text-[11px] tracking-wider border-b-2 border-[#395AFF]/30 pb-1 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-[#395AFF] inline-block" />
+                      <span>2. Signos Vitales al Momento de la Atención</span>
                     </h4>
-                    <div className="grid grid-cols-4 sm:grid-cols-8 gap-2 bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-center font-mono text-[11px]">
+                    <div className="grid grid-cols-4 sm:grid-cols-8 gap-2 bg-[#F4F4F4] p-2.5 rounded-lg border border-[#1F2952]/20 text-center font-mono text-[11px]">
                       <div>
-                        <span className="text-[9px] text-slate-400 block font-sans">T.A.</span>
-                        <span className="font-bold text-slate-800">{viewingRecord.vitals.systolic}/{viewingRecord.vitals.diastolic}</span>
+                        <span className="text-[9px] text-[#1F2952] font-bold block font-sans">T.A.</span>
+                        <span className="font-extrabold text-[#151E3A]">{viewingRecord.vitals.systolic}/{viewingRecord.vitals.diastolic}</span>
                       </div>
                       <div>
-                        <span className="text-[9px] text-slate-400 block font-sans">F.C.</span>
-                        <span className="font-bold text-slate-800">{viewingRecord.vitals.heartRate} lpm</span>
+                        <span className="text-[9px] text-[#1F2952] font-bold block font-sans">F.C.</span>
+                        <span className="font-extrabold text-[#151E3A]">{viewingRecord.vitals.heartRate} lpm</span>
                       </div>
                       <div>
-                        <span className="text-[9px] text-slate-400 block font-sans">F.R.</span>
-                        <span className="font-bold text-slate-800">{viewingRecord.vitals.respRate} rpm</span>
+                        <span className="text-[9px] text-[#1F2952] font-bold block font-sans">F.R.</span>
+                        <span className="font-extrabold text-[#151E3A]">{viewingRecord.vitals.respRate} rpm</span>
                       </div>
                       <div>
-                        <span className="text-[9px] text-slate-400 block font-sans">Temp.</span>
-                        <span className="font-bold text-slate-800">{viewingRecord.vitals.temperature}°C</span>
+                        <span className="text-[9px] text-[#1F2952] font-bold block font-sans">Temp.</span>
+                        <span className="font-extrabold text-[#151E3A]">{viewingRecord.vitals.temperature}°C</span>
                       </div>
                       <div>
-                        <span className="text-[9px] text-slate-400 block font-sans">SpO2</span>
-                        <span className="font-bold text-slate-800">{viewingRecord.vitals.spo2}%</span>
+                        <span className="text-[9px] text-[#1F2952] font-bold block font-sans">SpO2</span>
+                        <span className="font-extrabold text-[#395AFF]">{viewingRecord.vitals.spo2}%</span>
                       </div>
                       <div>
-                        <span className="text-[9px] text-slate-400 block font-sans">Peso</span>
-                        <span className="font-bold text-slate-800">{viewingRecord.vitals.weightKg} kg</span>
+                        <span className="text-[9px] text-[#1F2952] font-bold block font-sans">Peso</span>
+                        <span className="font-extrabold text-[#151E3A]">{viewingRecord.vitals.weightKg} kg</span>
                       </div>
                       <div>
-                        <span className="text-[9px] text-slate-400 block font-sans">Talla</span>
-                        <span className="font-bold text-slate-800">{viewingRecord.vitals.heightCm} cm</span>
+                        <span className="text-[9px] text-[#1F2952] font-bold block font-sans">Talla</span>
+                        <span className="font-extrabold text-[#151E3A]">{viewingRecord.vitals.heightCm} cm</span>
                       </div>
                       <div>
-                        <span className="text-[9px] text-slate-400 block font-sans">IMC</span>
-                        <span className="font-bold text-slate-800">{viewingRecord.vitals.bmi || '-'}</span>
+                        <span className="text-[9px] text-[#1F2952] font-bold block font-sans">IMC</span>
+                        <span className="font-extrabold text-[#151E3A]">{viewingRecord.vitals.bmi || '-'}</span>
                       </div>
                     </div>
                   </div>
@@ -1162,21 +1166,23 @@ export const MedicalRecordsModule: React.FC<MedicalRecordsModuleProps> = ({
                 {/* 3. Examen Físico */}
                 {viewingRecord.physicalExam && (
                   <div className="space-y-1">
-                    <h4 className="font-bold text-slate-900 uppercase text-[11px] tracking-wider border-b border-slate-200 pb-1">
-                      3. Hallazgos al Examen Físico
+                    <h4 className="font-extrabold text-[#151E3A] uppercase text-[11px] tracking-wider border-b-2 border-[#395AFF]/30 pb-1 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-[#395AFF] inline-block" />
+                      <span>3. Hallazgos al Examen Físico</span>
                     </h4>
-                    <p className="text-slate-800 pt-0.5 whitespace-pre-line">
+                    <p className="text-[#151E3A] pt-0.5 whitespace-pre-line">
                       {viewingRecord.physicalExam}
                     </p>
                   </div>
                 )}
 
-                {/* 4. Diagnóstico Clínico */}
-                <div className="space-y-1 bg-sky-50/50 p-3 rounded-xl border border-sky-200">
-                  <h4 className="font-extrabold text-sky-950 uppercase text-[11px] tracking-wider">
-                    4. Diagnóstico Clínico
+                {/* 4. Diagnóstico Clínico (#F4F4F4 + #7DDACB + #151E3A) */}
+                <div className="space-y-1 bg-[#F4F4F4] p-3.5 rounded-xl border-l-4 border-[#7DDACB] border border-[#1F2952]/20">
+                  <h4 className="font-extrabold text-[#1F2952] uppercase text-[11px] tracking-wider flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-[#7DDACB] inline-block" />
+                    <span>4. Diagnóstico Clínico</span>
                   </h4>
-                  <p className="text-slate-900 font-bold text-sm pt-0.5">
+                  <p className="text-[#151E3A] font-black text-sm pt-0.5">
                     {viewingRecord.diagnosis}
                   </p>
                 </div>
@@ -1184,17 +1190,18 @@ export const MedicalRecordsModule: React.FC<MedicalRecordsModuleProps> = ({
                 {/* 5. Plan Terapéutico & Récipe */}
                 {(viewingRecord.treatmentPlan || viewingRecord.prescriptions) && (
                   <div className="space-y-2">
-                    <h4 className="font-bold text-slate-900 uppercase text-[11px] tracking-wider border-b border-slate-200 pb-1">
-                      5. Plan de Tratamiento & Récipe Médico
+                    <h4 className="font-extrabold text-[#151E3A] uppercase text-[11px] tracking-wider border-b-2 border-[#395AFF]/30 pb-1 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-[#395AFF] inline-block" />
+                      <span>5. Plan de Tratamiento & Récipe Médico</span>
                     </h4>
                     {viewingRecord.treatmentPlan && (
-                      <p className="text-slate-800 whitespace-pre-line">
+                      <p className="text-[#151E3A] whitespace-pre-line">
                         {viewingRecord.treatmentPlan}
                       </p>
                     )}
                     {viewingRecord.prescriptions && (
-                      <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 font-mono text-xs whitespace-pre-line">
-                        <span className="font-sans font-bold text-slate-900 block mb-1">Prescripciones Farmacológicas:</span>
+                      <div className="p-3.5 rounded-xl bg-[#F4F4F4] border-l-4 border-[#395AFF] border border-[#1F2952]/15 font-mono text-xs whitespace-pre-line text-[#151E3A]">
+                        <span className="font-sans font-extrabold text-[#1F2952] block mb-1 uppercase text-[10px] tracking-wider">Prescripciones Farmacológicas:</span>
                         {viewingRecord.prescriptions}
                       </div>
                     )}
@@ -1205,15 +1212,15 @@ export const MedicalRecordsModule: React.FC<MedicalRecordsModuleProps> = ({
                 {(viewingRecord.complementaryStudies || viewingRecord.nextFollowUpDate) && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 text-xs">
                     {viewingRecord.complementaryStudies && (
-                      <div className="p-2.5 rounded-lg border border-slate-200">
-                        <span className="font-bold text-slate-900 block text-[10px] uppercase">Estudios Solicitados:</span>
-                        <span className="text-slate-700">{viewingRecord.complementaryStudies}</span>
+                      <div className="p-3 rounded-lg bg-[#F4F4F4] border border-[#1F2952]/20">
+                        <span className="font-extrabold text-[#1F2952] block text-[10px] uppercase">Estudios Solicitados:</span>
+                        <span className="text-[#151E3A] font-medium">{viewingRecord.complementaryStudies}</span>
                       </div>
                     )}
                     {viewingRecord.nextFollowUpDate && (
-                      <div className="p-2.5 rounded-lg border border-slate-200">
-                        <span className="font-bold text-slate-900 block text-[10px] uppercase">Próximo Control:</span>
-                        <span className="text-slate-700">{viewingRecord.nextFollowUpDate}</span>
+                      <div className="p-3 rounded-lg bg-[#F4F4F4] border border-[#1F2952]/20">
+                        <span className="font-extrabold text-[#395AFF] block text-[10px] uppercase">Próximo Control:</span>
+                        <span className="text-[#151E3A] font-bold">{viewingRecord.nextFollowUpDate}</span>
                       </div>
                     )}
                   </div>
@@ -1221,23 +1228,23 @@ export const MedicalRecordsModule: React.FC<MedicalRecordsModuleProps> = ({
 
               </div>
 
-              {/* Signature & Seal Footer */}
-              <div className="pt-10 flex items-end justify-between gap-6 border-t border-slate-200">
-                <div className="text-[10px] text-slate-400 space-y-0.5 leading-snug">
-                  <p className="font-bold text-slate-600">ATP MEDICAL CARACAS</p>
-                  <p>{config.address}</p>
-                  <p>Documento médico legal confidencial expedido en conformidad con la normativa sanitaria.</p>
+              {/* Signature & Seal Footer (#151E3A, #1F2952, #7DDACB, #395AFF) */}
+              <div className="pt-8 flex items-end justify-between gap-6 border-t-2 border-[#151E3A]">
+                <div className="text-[10px] text-[#1F2952] space-y-0.5 leading-snug">
+                  <p className="font-black text-[#151E3A] text-xs">ATP MEDICAL CARACAS</p>
+                  <p className="font-medium">{config.address}</p>
+                  <p className="text-[#1F2952]/80">Documento médico legal confidencial expedido en conformidad con la normativa sanitaria.</p>
                 </div>
 
                 <div className="text-center shrink-0 w-64 space-y-1">
-                  <div className="border-b border-slate-900 h-10 w-48 mx-auto"></div>
-                  <p className="font-bold text-slate-900 text-xs">
+                  <div className="border-b-2 border-[#151E3A] h-10 w-48 mx-auto"></div>
+                  <p className="font-black text-[#151E3A] text-xs">
                     {viewingRecord.doctorName}
                   </p>
-                  <p className="text-[11px] text-sky-800 font-semibold">
+                  <p className="text-[11px] text-[#395AFF] font-extrabold uppercase">
                     {viewingRecord.specialty}
                   </p>
-                  <p className="text-[10px] text-slate-500">
+                  <p className="text-[10px] text-[#1F2952] font-semibold">
                     Firma y Sello del Médico Especialista
                   </p>
                 </div>

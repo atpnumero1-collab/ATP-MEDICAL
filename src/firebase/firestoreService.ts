@@ -130,11 +130,29 @@ export async function seedInitialFirestoreData(): Promise<void> {
       await batch.commit();
     }
 
-    // 2. Clinic Config
+    // 2. Clinic Config (seed or upgrade to official PDF color palette)
     const configSnap = await getDocs(collection(db, COLLECTIONS.CONFIG));
     if (configSnap.empty) {
       console.info('Seeding initial config into Firestore...');
       await setDoc(doc(db, COLLECTIONS.CONFIG, 'main_config'), INITIAL_CONFIG);
+    } else {
+      const existingDoc = configSnap.docs[0];
+      const existingConfig = existingDoc.data() as ClinicConfig;
+      if (
+        existingConfig.activePresetId === 'atp-vivos' ||
+        existingConfig.activePresetId === 'atp-classic' ||
+        existingConfig.activePresetId === 'atp-venezuela' ||
+        existingConfig.primaryColor === '#0B5ED7' ||
+        existingConfig.primaryColor === '#002B49'
+      ) {
+        await setDoc(doc(db, COLLECTIONS.CONFIG, 'main_config'), {
+          ...existingConfig,
+          primaryColor: INITIAL_CONFIG.primaryColor,
+          accentColor: INITIAL_CONFIG.accentColor,
+          secondaryColor: INITIAL_CONFIG.secondaryColor,
+          activePresetId: INITIAL_CONFIG.activePresetId
+        });
+      }
     }
 
     // 3. Purge all test data (patients, appointments, intakes)

@@ -2,36 +2,36 @@ import { Patient, Doctor, Appointment, PatientIntake, ClinicConfig } from '../ty
 
 export const COLOR_PRESETS = [
   {
-    id: 'atp-vivos',
-    name: 'ATP Colores Vivos (Oficial Caracas)',
-    primary: '#0B5ED7',
-    accent: '#00A3FF',
-    secondary: '#00C48C',
-    description: 'Identidad viva y luminosa de ATP Medical Caracas: Azul Rey Vibrante, Cian Eléctrico y Verde Vital.'
+    id: 'atp-oficial-pdf',
+    name: 'Identidad Oficial ATP Medical (Manual Corporativo)',
+    primary: '#151E3A',
+    accent: '#395AFF',
+    secondary: '#7DDACB',
+    description: 'Paleta oficial del documento ATP Medical: Azul Marino Profundo (#151E3A), Azul Real (#1F2952), Turquesa Clínico (#7DDACB), Gris Alabastro (#F4F4F4) y Azul Eléctrico (#395AFF).'
   },
   {
-    id: 'atp-zafiro',
-    name: 'ATP Zafiro & Cian Neón',
-    primary: '#0047AB',
-    accent: '#00D2FF',
-    secondary: '#10B981',
-    description: 'Colores de alta intensidad y contraste para clínicas dinámicas.'
+    id: 'atp-royal-blue',
+    name: 'ATP Azul Real & Eléctrico (#1F2952 · #395AFF)',
+    primary: '#1F2952',
+    accent: '#395AFF',
+    secondary: '#7DDACB',
+    description: 'Variante con encabezados en Azul Real (#1F2952), acciones en Azul Eléctrico (#395AFF) y detalles en Turquesa (#7DDACB).'
   },
   {
-    id: 'atp-emerald',
-    name: 'ATP Bio-Salud & Esmeralda Radiante',
-    primary: '#059669',
-    accent: '#06B6D4',
-    secondary: '#3B82F6',
-    description: 'Enfoque en medicina preventiva, bienestar y rehabilitación celular.'
+    id: 'atp-cobalt-navy',
+    name: 'ATP Azul Eléctrico Dominante (#395AFF · #151E3A)',
+    primary: '#395AFF',
+    accent: '#151E3A',
+    secondary: '#7DDACB',
+    description: 'Encabezados vibrantes en Azul Eléctrico (#395AFF) con contraste en Azul Marino (#151E3A) y Turquesa (#7DDACB).'
   },
   {
-    id: 'atp-energy',
-    name: 'ATP Energía Pura & Índigo',
-    primary: '#4F46E5',
-    accent: '#06B6D4',
-    secondary: '#10B981',
-    description: 'Aspecto tecnológico y moderno con tonos energéticos de máxima nitidez.'
+    id: 'atp-navy-mint',
+    name: 'ATP Marino & Turquesa Clínico (#151E3A · #7DDACB)',
+    primary: '#151E3A',
+    accent: '#1F2952',
+    secondary: '#395AFF',
+    description: 'Combinación sobria de alta precisión médica en tonos marinos (#151E3A / #1F2952) y Azul Eléctrico (#395AFF).'
   }
 ];
 
@@ -42,11 +42,11 @@ export const INITIAL_CONFIG: ClinicConfig = {
   phone: '+58 414-3651970',
   email: 'atpnumero1@gmail.com',
   address: 'Piso 1, Oficina 5, Centro Comercial Parque Humboldt, Caracas 1080, Miranda',
-  primaryColor: '#0B5ED7',
-  accentColor: '#00A3FF',
-  secondaryColor: '#00C48C',
+  primaryColor: '#151E3A',
+  accentColor: '#395AFF',
+  secondaryColor: '#7DDACB',
   enableAudioChime: true,
-  activePresetId: 'atp-vivos'
+  activePresetId: 'atp-oficial-pdf'
 };
 
 export const INITIAL_DOCTORS: Doctor[] = [

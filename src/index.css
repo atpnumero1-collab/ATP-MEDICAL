@@ -1,22 +1,80 @@
 @import "tailwindcss";
 
+@theme {
+  /* Official ATP Medical Brand Palette (#151E3A, #1F2952, #7DDACB, #F4F4F4, #395AFF) */
+  --color-atp-navy: #151E3A;
+  --color-atp-royal: #1F2952;
+  --color-atp-mint: #7DDACB;
+  --color-atp-light: #F4F4F4;
+  --color-atp-blue: #395AFF;
+
+  /* Harmonize Tailwind Slate with ATP Navy (#151E3A), Royal (#1F2952) & Light (#F4F4F4) */
+  --color-slate-50: #F4F4F4;
+  --color-slate-100: #EAECEF;
+  --color-slate-200: #D8DCE6;
+  --color-slate-300: #B8C0D4;
+  --color-slate-700: #283566;
+  --color-slate-800: #1F2952;
+  --color-slate-900: #151E3A;
+  --color-slate-950: #0F162B;
+
+  /* Harmonize Tailwind Blue / Sky / Indigo with ATP Electric Blue (#395AFF) & Royal (#1F2952) */
+  --color-blue-50: #EEF2FF;
+  --color-blue-100: #DCE4FF;
+  --color-blue-500: #395AFF;
+  --color-blue-600: #395AFF;
+  --color-blue-700: #2945D9;
+  --color-blue-800: #1F2952;
+  --color-blue-900: #151E3A;
+
+  --color-sky-50: #EEF4FF;
+  --color-sky-100: #D9E6FF;
+  --color-sky-200: #B8D0FF;
+  --color-sky-500: #395AFF;
+  --color-sky-600: #395AFF;
+  --color-sky-700: #1F2952;
+  --color-sky-800: #1F2952;
+  --color-sky-900: #151E3A;
+  --color-sky-950: #151E3A;
+
+  --color-indigo-50: #EEF2FF;
+  --color-indigo-600: #395AFF;
+  --color-indigo-700: #1F2952;
+
+  /* Harmonize Tailwind Teal / Cyan with ATP Mint (#7DDACB) */
+  --color-teal-50: #EEFCF9;
+  --color-teal-100: #D3F6F0;
+  --color-teal-300: #7DDACB;
+  --color-teal-400: #7DDACB;
+  --color-teal-500: #56C5B4;
+  --color-teal-600: #2BA695;
+
+  --color-cyan-50: #EEFCF9;
+  --color-cyan-100: #D3F6F0;
+  --color-cyan-200: #7DDACB;
+  --color-cyan-300: #7DDACB;
+  --color-cyan-400: #7DDACB;
+  --color-cyan-500: #4CC2B0;
+  --color-cyan-600: #1F2952;
+}
+
 :root {
-  --color-primary: #0b5ed7;
-  --color-primary-light: #2563eb;
-  --color-accent: #00a3ff;
-  --color-accent-hover: #0284c7;
-  --color-accent-soft: rgba(0, 163, 255, 0.12);
-  --color-secondary: #00c48c;
+  --color-primary: #151E3A;
+  --color-primary-light: #1F2952;
+  --color-accent: #395AFF;
+  --color-accent-hover: #2945D9;
+  --color-accent-soft: rgba(57, 90, 255, 0.12);
+  --color-secondary: #7DDACB;
   --color-surface: #ffffff;
-  --color-canvas: #f8fafc;
+  --color-canvas: #F4F4F4;
   --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
 
 body {
   font-family: var(--font-sans);
-  background-color: var(--color-canvas);
-  color: #0f172a;
+  background-color: #F4F4F4;
+  color: #151E3A;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
@@ -48,6 +106,10 @@ body {
 }
 
 @media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
   body * {
     visibility: hidden;
   }
@@ -62,7 +124,6 @@ body {
     margin: 0;
     padding: 20px;
     background: white !important;
-    color: black !important;
   }
   .no-print {
     display: none !important;

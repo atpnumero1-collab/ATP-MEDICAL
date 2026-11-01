@@ -64,33 +64,85 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
   return (
     <div className="space-y-6">
       
-      {/* Header - Vanguard Settings & Brand Identity */}
-      <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
+      {/* Header - Official ATP Medical Brand Identity */}
+      <div className="bg-white p-5 sm:p-6 rounded-2xl border-l-4 border-[#395AFF] border border-[#1F2952]/15 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
         <div className="flex items-start sm:items-center gap-3.5">
-          <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-indigo-600 to-blue-600 text-white flex items-center justify-center shadow-md shrink-0">
+          <div className="w-11 h-11 rounded-xl bg-[#151E3A] border border-[#7DDACB] text-[#7DDACB] flex items-center justify-center shadow-md shrink-0">
             <Palette className="w-6 h-6" />
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                Ajuste de Colores & Identidad Institucional
+              <h1 className="text-xl sm:text-2xl font-black text-[#151E3A] tracking-tight">
+                Manual de Colores & Identidad MEDICAL
               </h1>
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 font-mono">
-                ATP MEDICAL CARACAS
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#1F2952] text-[#7DDACB] font-mono">
+                PALETA OFICIAL
               </span>
             </div>
-            <p className="text-xs text-slate-500 mt-1">
-              Personalización de la paleta cromática clínica, datos de contacto de la sede y sonido de turnero asistencial.
+            <p className="text-xs text-[#1F2952]/80 mt-1">
+              Códigos cromáticos oficiales aplicados a toda la plataforma, portal de autogestión e informes médicos en PDF.
             </p>
           </div>
         </div>
 
         {savedSuccess && (
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold rounded-lg">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#7DDACB]/25 border border-[#7DDACB] text-[#151E3A] text-xs font-bold rounded-lg">
+            <CheckCircle2 className="w-4 h-4 text-[#151E3A]" />
             <span>¡Configuración y colores actualizados!</span>
           </div>
         )}
+      </div>
+
+      {/* Official Logo & 5-Color Swatch Banner from PDF Documents */}
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-[#1F2952]/15 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+          <div className="flex items-center gap-4">
+            <div className="w-36 h-16 rounded-xl overflow-hidden border-2 border-[#7DDACB] bg-[#F4F4F4] flex items-center justify-center shadow-sm shrink-0">
+              <img
+                src="/assets/aistudio/siglas_atp.jpg"
+                alt="Siglas Oficiales"
+                className="w-full h-full object-cover object-center scale-[1.55]"
+              />
+            </div>
+            <div>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded bg-[#151E3A] text-[#7DDACB] inline-block mb-1">
+                SIGLAS OFICIALES ACTIVAS
+              </span>
+              <h3 className="text-sm font-black text-[#151E3A]">
+                Siglas e Identidad Gráfica Oficial MEDICAL
+              </h3>
+              <p className="text-xs text-[#1F2952]/80">
+                Siglas oficiales integradas en barra principal, portal de pacientes, tickets e informes médicos en PDF.
+              </p>
+            </div>
+          </div>
+
+          <div className="text-left sm:text-right">
+            <span className="text-xs font-extrabold text-[#151E3A] uppercase tracking-wider block">
+              Códigos Oficiales del Manual Corporativo
+            </span>
+            <span className="text-[11px] font-mono text-[#395AFF] font-bold">
+              #151E3A · #1F2952 · #7DDACB · #F4F4F4 · #395AFF
+            </span>
+          </div>
+        </div>
+        <div className="grid grid-cols-5 rounded-xl overflow-hidden border border-[#1F2952]/20 h-20 shadow-xs font-mono text-xs font-extrabold">
+          <div className="bg-[#151E3A] text-white flex flex-col items-center justify-end pb-2.5">
+            <span>#151E3A</span>
+          </div>
+          <div className="bg-[#1F2952] text-white flex flex-col items-center justify-end pb-2.5">
+            <span>#1F2952</span>
+          </div>
+          <div className="bg-[#7DDACB] text-[#151E3A] flex flex-col items-center justify-end pb-2.5">
+            <span>#7DDACB</span>
+          </div>
+          <div className="bg-[#F4F4F4] text-[#151E3A] flex flex-col items-center justify-end pb-2.5 border-x border-[#1F2952]/10">
+            <span>#F4F4F4</span>
+          </div>
+          <div className="bg-[#395AFF] text-white flex flex-col items-center justify-end pb-2.5">
+            <span>#395AFF</span>
+          </div>
+        </div>
       </div>
 
       <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -101,11 +153,11 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
           {/* Preset Palettes */}
           <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs space-y-4">
             <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-              <Palette className="w-4 h-4 text-sky-600" />
+              <Palette className="w-4 h-4 text-[#395AFF]" />
               <div>
-                <h2 className="text-sm font-bold text-slate-900">Paletas Oficiales ATP MEDICAL</h2>
+                <h2 className="text-sm font-bold text-[#151E3A]">Variantes de Aplicación Oficial</h2>
                 <p className="text-[11px] text-slate-500">
-                  Seleccione una de las paletas clínicas calibradas para máxima legibilidad médica.
+                  Seleccione la distribución de los 5 colores oficiales o ajuste cada código hexadecimal.
                 </p>
               </div>
             </div>

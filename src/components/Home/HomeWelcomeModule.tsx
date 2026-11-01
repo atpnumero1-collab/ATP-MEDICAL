@@ -161,24 +161,33 @@ export const HomeWelcomeModule: React.FC<HomeWelcomeModuleProps> = ({
   return (
     <div className="w-full space-y-6 sm:space-y-8 animate-fadeIn">
       
-      {/* 1. HERO HEADER: Distinctive Welcome Banner with Brand & Instagram Anchor */}
-      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-r from-blue-700 via-indigo-700 to-sky-600 text-white shadow-xl">
+      {/* 1. HERO HEADER: Official ATP Medical Palette (#151E3A, #1F2952, #7DDACB, #F4F4F4, #395AFF) */}
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-r from-[#151E3A] via-[#1F2952] to-[#395AFF] text-white shadow-xl border-b-4 border-[#7DDACB]">
         {/* Subtle decorative glow circles */}
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-cyan-400/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-[#7DDACB]/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-[#395AFF]/25 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 p-5 sm:p-8 lg:p-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-3 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/25 text-white text-xs font-bold tracking-wide">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>Sede Oficial Caracas · C.C. Parque Humboldt</span>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="w-32 h-14 rounded-xl overflow-hidden border-2 border-[#7DDACB] bg-[#F4F4F4] flex items-center justify-center shadow-lg shrink-0">
+                <img
+                  src="/assets/aistudio/siglas_atp.jpg"
+                  alt="Siglas Oficiales"
+                  className="w-full h-full object-cover object-center scale-[1.55]"
+                />
+              </div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1F2952]/90 backdrop-blur-md border border-[#7DDACB]/60 text-white text-xs font-bold tracking-wide">
+                <span className="w-2 h-2 rounded-full bg-[#7DDACB] animate-pulse" />
+                <span>Sede Oficial Caracas · C.C. Parque Humboldt</span>
+              </div>
             </div>
 
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white leading-tight">
-              Bienvenido al Sistema Integral de <span className="text-cyan-200">ATP MEDICAL</span>
+              Bienvenido al Sistema Integral <span className="text-[#7DDACB]">ATP MEDICAL</span>
             </h1>
 
-            <p className="text-sm sm:text-base text-blue-100 font-medium leading-relaxed">
+            <p className="text-sm sm:text-base text-[#F4F4F4] font-medium leading-relaxed">
               «{config.slogan || 'La energía que impulsa tu bienestar'}». Gestión médica ágil de consultas, admisión en sala de espera, historias clínicas e informes médicos en tiempo real.
             </p>
 
@@ -188,9 +197,9 @@ export const HomeWelcomeModule: React.FC<HomeWelcomeModuleProps> = ({
                 href={instagramUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 text-white font-bold shadow-md hover:opacity-95 transition-transform active:scale-95"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#395AFF] hover:brightness-110 border border-[#7DDACB]/40 text-white font-bold shadow-md transition-transform active:scale-95"
               >
-                <Instagram className="w-4 h-4" />
+                <Instagram className="w-4 h-4 text-[#7DDACB]" />
                 <span>@atpmedical_ve en Instagram</span>
                 <ExternalLink className="w-3 h-3 opacity-80" />
               </a>
@@ -199,14 +208,14 @@ export const HomeWelcomeModule: React.FC<HomeWelcomeModuleProps> = ({
                 href={`https://wa.me/584143651970?text=${encodeURIComponent('Hola ATP Medical, le contacto desde la clínica.')}`}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-500/90 hover:bg-emerald-500 text-white font-bold backdrop-blur-xs transition-colors"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#7DDACB] hover:brightness-105 text-[#151E3A] font-extrabold transition-colors"
               >
-                <Phone className="w-3.5 h-3.5" />
+                <Phone className="w-3.5 h-3.5 text-[#151E3A]" />
                 <span>{config.phone}</span>
               </a>
 
-              <span className="hidden sm:inline-flex items-center gap-1.5 text-blue-200 text-xs py-1.5">
-                <MapPin className="w-3.5 h-3.5 text-cyan-300" />
+              <span className="hidden sm:inline-flex items-center gap-1.5 text-[#F4F4F4] text-xs py-1.5">
+                <MapPin className="w-3.5 h-3.5 text-[#7DDACB]" />
                 <span>Piso 1, Ofic. 5</span>
               </span>
             </div>
@@ -216,17 +225,17 @@ export const HomeWelcomeModule: React.FC<HomeWelcomeModuleProps> = ({
           <div className="flex flex-col sm:flex-row lg:flex-col gap-2.5 shrink-0">
             <button
               onClick={onQuickAppointment}
-              className="px-5 py-3 rounded-xl bg-white text-blue-900 hover:bg-blue-50 font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 cursor-pointer"
+              className="px-5 py-3 rounded-xl bg-white text-[#151E3A] hover:bg-[#F4F4F4] font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 cursor-pointer"
             >
-              <Calendar className="w-4 h-4 text-blue-600" />
+              <Calendar className="w-4 h-4 text-[#395AFF]" />
               <span>Agendar Nueva Cita</span>
             </button>
 
             <button
               onClick={onSharePortalLink}
-              className="px-5 py-2.5 rounded-xl bg-emerald-500/90 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 cursor-pointer"
+              className="px-5 py-2.5 rounded-xl bg-[#7DDACB] hover:brightness-105 text-[#151E3A] font-extrabold text-xs flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 cursor-pointer"
             >
-              <Share2 className="w-4 h-4" />
+              <Share2 className="w-4 h-4 text-[#151E3A]" />
               <span>Link Autogestión WhatsApp</span>
             </button>
           </div>
@@ -242,12 +251,14 @@ export const HomeWelcomeModule: React.FC<HomeWelcomeModuleProps> = ({
         {/* Instagram Header Bar */}
         <div className="p-3 sm:p-4 bg-slate-50 border-b border-slate-200/80 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full p-0.5 bg-gradient-to-tr from-amber-400 via-rose-500 to-fuchsia-600 shadow-sm shrink-0">
-              <img 
-                src="/src/assets/images/atp_medical_badge_1792268353732.jpg" 
-                alt="ATP Medical"
-                className="w-full h-full object-cover rounded-full bg-white border border-white"
-              />
+            <div className="w-20 h-9 rounded-lg p-0.5 bg-gradient-to-tr from-[#151E3A] via-[#395AFF] to-[#7DDACB] shadow-sm shrink-0 overflow-hidden">
+              <div className="w-full h-full rounded-md overflow-hidden bg-[#F4F4F4] flex items-center justify-center">
+                <img 
+                  src="/assets/aistudio/siglas_atp.jpg" 
+                  alt="Siglas Oficiales"
+                  className="w-full h-full object-cover object-center scale-[1.55]"
+                />
+              </div>
             </div>
             <div>
               <div className="flex items-center gap-1.5">
@@ -445,7 +456,7 @@ export const HomeWelcomeModule: React.FC<HomeWelcomeModuleProps> = ({
             {doctors.length}
           </p>
           <p className="text-[11px] text-slate-500">
-            Directorio oficial ATP
+            Directorio médico oficial
           </p>
         </div>
 
@@ -668,20 +679,20 @@ export const HomeWelcomeModule: React.FC<HomeWelcomeModuleProps> = ({
           {/* Card 8: Enlace WhatsApp Pacientes */}
           <div 
             onClick={onSharePortalLink}
-            className="group bg-gradient-to-br from-emerald-50 to-teal-50 p-5 rounded-2xl border border-emerald-300/80 shadow-2xs hover:shadow-md hover:border-emerald-400 transition-all cursor-pointer space-y-2.5 relative overflow-hidden"
+            className="group bg-[#151E3A] p-5 rounded-2xl border-2 border-[#7DDACB] shadow-sm hover:shadow-md transition-all cursor-pointer space-y-2.5 relative overflow-hidden text-white"
           >
-            <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold group-hover:scale-110 shadow-sm transition-all">
+            <div className="w-10 h-10 rounded-xl bg-[#7DDACB] text-[#151E3A] flex items-center justify-center font-bold group-hover:scale-110 shadow-sm transition-all">
               <Share2 className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-emerald-900">
+              <h3 className="font-bold text-sm text-white">
                 Link WhatsApp Pacientes
               </h3>
-              <p className="text-xs text-emerald-700 mt-1 leading-relaxed">
+              <p className="text-xs text-[#F4F4F4]/80 mt-1 leading-relaxed">
                 Compartir enlace para que los pacientes autogestionen su cita médica desde su teléfono móvil.
               </p>
             </div>
-            <div className="flex items-center gap-1 text-xs font-bold text-emerald-700 pt-1">
+            <div className="flex items-center gap-1 text-xs font-bold text-[#7DDACB] pt-1">
               <span>Compartir o Copiar</span>
               <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
             </div>
