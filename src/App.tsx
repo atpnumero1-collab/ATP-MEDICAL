@@ -59,6 +59,7 @@ import { MedicalRecordsModule } from './components/MedicalRecords/MedicalRecords
 import { PatientBookingPortal } from './components/SelfService/PatientBookingPortal';
 import { HomeWelcomeModule } from './components/Home/HomeWelcomeModule';
 import { OfficialAtpLogo } from './components/OfficialLogo';
+import { downloadMedicalRecordPdf } from './utils/pdfGenerator';
 import { 
   PlusCircle, 
   Calendar as CalendarIcon, 
@@ -90,6 +91,11 @@ export default function App() {
     window.location.search.includes('autogestion') ||
     window.location.hash.includes('autogestion')
   );
+
+  // Check if patient accessed a shared Medical Report PDF link (?informe=<id>)
+  const sharedReportId = typeof window !== 'undefined'
+    ? new URLSearchParams(window.location.search).get('informe')
+    : null;
 
   // Staff preview mode for testing portal from within admin
   const [isStaffPortalPreview, setIsStaffPortalPreview] = useState(false);
@@ -390,6 +396,113 @@ export default function App() {
           onBookAppointment={handleBookSelfManagedAppointment}
           onRegisterPatient={handleAddPatient}
         />
+      </div>
+    );
+  }
+
+  // IF SHARED MEDICAL REPORT PDF LINK (?informe=<id>) IS ACTIVE
+  if (sharedReportId) {
+    const sharedRecord = medicalRecords.find(r => r.id === sharedReportId);
+    return (
+      <div className="min-h-screen bg-[#151E3A] text-[#151E3A] p-4 sm:p-8 flex flex-col items-center justify-center">
+        <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border-2 border-[#7DDACB] overflow-hidden">
+          <div className="bg-[#151E3A] p-5 text-white border-b-4 border-[#7DDACB] flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-28 h-12 px-2 py-1 rounded-xl bg-[#F4F4F4] border border-[#7DDACB] flex items-center justify-center shrink-0">
+                <OfficialAtpLogo className="w-full h-full" />
+              </div>
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[#7DDACB] block">
+                  Documento Clínico Oficial · PDF
+                </span>
+                <h1 className="text-base sm:text-lg font-black text-white">
+                  Informe Médico Electrónico
+                </h1>
+              </div>
+            </div>
+            {sharedRecord && (
+              <button
+                type="button"
+                onClick={() => downloadMedicalRecordPdf(sharedRecord, config)}
+                className="px-4 py-2.5 rounded-xl bg-[#7DDACB] hover:brightness-105 text-[#151E3A] font-black text-xs flex items-center gap-2 shadow-lg cursor-pointer shrink-0"
+              >
+                <span>⬇ Descargar PDF</span>
+              </button>
+            )}
+          </div>
+
+          {!sharedRecord ? (
+            <div className="p-8 text-center space-y-2 text-xs text-[#1F2952]">
+              <p className="font-bold text-sm text-[#151E3A]">Cargando Informe Médico Oficial...</p>
+              <p>Conectando con el expediente electrónico de ATP Medical.</p>
+            </div>
+          ) : (
+            <div className="p-6 space-y-4 text-xs">
+              <div className="bg-[#F4F4F4] p-4 rounded-xl border-l-4 border-[#395AFF] grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div>
+                  <span className="text-[10px] font-bold uppercase text-[#1F2952] block">Folio</span>
+                  <span className="font-mono font-extrabold text-[#395AFF] text-sm">{sharedRecord.recordNumber}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold uppercase text-[#1F2952] block">Paciente</span>
+                  <span className="font-extrabold text-[#151E3A] text-sm">{sharedRecord.patientName}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold uppercase text-[#1F2952] block">Cédula</span>
+                  <span className="font-mono font-bold text-[#151E3A]">{sharedRecord.patientDni}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold uppercase text-[#1F2952] block">Fecha</span>
+                  <span className="font-mono font-bold text-[#151E3A]">{sharedRecord.date} {sharedRecord.time}</span>
+                </div>
+              </div>
+
+              <div className="bg-[#1F2952] text-white p-3.5 rounded-xl border-l-4 border-[#7DDACB] flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] text-[#7DDACB] uppercase font-bold block">Especialista Tratante</span>
+                  <span className="font-black text-sm">{sharedRecord.doctorName}</span>
+                </div>
+                <span className="font-extrabold text-[#7DDACB] uppercase">{sharedRecord.specialty}</span>
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <span className="font-extrabold text-[#151E3A] uppercase text-[11px] block">Motivo de Consulta:</span>
+                  <p className="text-[#1F2952] mt-0.5">{sharedRecord.chiefComplaint}</p>
+                </div>
+
+                <div className="bg-[#F4F4F4] p-3.5 rounded-xl border-l-4 border-[#7DDACB]">
+                  <span className="font-extrabold text-[#1F2952] uppercase text-[11px] block">Diagnóstico Clínico:</span>
+                  <p className="font-black text-[#151E3A] text-sm mt-0.5">{sharedRecord.diagnosis}</p>
+                </div>
+
+                {sharedRecord.treatmentPlan && (
+                  <div>
+                    <span className="font-extrabold text-[#151E3A] uppercase text-[11px] block">Plan de Tratamiento & Indicaciones:</span>
+                    <p className="text-[#1F2952] whitespace-pre-line mt-0.5">{sharedRecord.treatmentPlan}</p>
+                  </div>
+                )}
+
+                {sharedRecord.prescriptions && (
+                  <div className="bg-[#F4F4F4] p-3.5 rounded-xl border-l-4 border-[#395AFF] font-mono">
+                    <span className="font-sans font-extrabold text-[#1F2952] uppercase text-[10px] block mb-1">Récipe / Medicamentos:</span>
+                    <p className="text-[#151E3A] whitespace-pre-line">{sharedRecord.prescriptions}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-3 border-t border-slate-200 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => downloadMedicalRecordPdf(sharedRecord, config)}
+                  className="w-full sm:w-auto px-6 py-3 rounded-xl bg-[#395AFF] hover:brightness-110 text-white font-black text-xs flex items-center justify-center gap-2 shadow-md cursor-pointer"
+                >
+                  <span>📥 Descargar Informe Médico en PDF ({sharedRecord.recordNumber}.pdf)</span>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     );
   }

@@ -8,6 +8,7 @@ import {
 } from '../../types';
 import { calculateBmi } from '../../data/initialData';
 import { buildMedicalRecordWhatsAppMessage, buildWhatsAppUrl } from '../../utils/whatsapp';
+import { downloadMedicalRecordPdf, sendMedicalRecordPdfViaWhatsApp } from '../../utils/pdfGenerator';
 import { OfficialAtpLogo } from '../OfficialLogo';
 import { 
   FileText, 
@@ -65,6 +66,7 @@ export const MedicalRecordsModule: React.FC<MedicalRecordsModuleProps> = ({
   const [viewingRecord, setViewingRecord] = useState<MedicalRecord | null>(null);
   const [isPrinting, setIsPrinting] = useState(false);
   const [savedSuccessToast, setSavedSuccessToast] = useState(false);
+  const [savedConfirmRecord, setSavedConfirmRecord] = useState<MedicalRecord | null>(null);
 
   // New Record Form State
   const [formDoctorId, setFormDoctorId] = useState<string>(doctors[0]?.id || '');
@@ -210,12 +212,14 @@ export const MedicalRecordsModule: React.FC<MedicalRecordsModuleProps> = ({
       createdAt: new Date().toISOString()
     };
 
+    // Close creation window immediately and show confirmation message
+    setIsNewRecordModalOpen(false);
+    setSavedConfirmRecord(newRecord);
+    setSavedSuccessToast(true);
+    setTimeout(() => setSavedSuccessToast(false), 6000);
+
     try {
       await onSaveRecord(newRecord);
-      setIsNewRecordModalOpen(false);
-      setViewingRecord(newRecord);
-      setSavedSuccessToast(true);
-      setTimeout(() => setSavedSuccessToast(false), 3000);
     } catch (err) {
       console.error('Error saving medical record:', err);
     }
@@ -275,7 +279,17 @@ export const MedicalRecordsModule: React.FC<MedicalRecordsModuleProps> = ({
   const getRecordWhatsAppUrl = (rec: MedicalRecord) => {
     const patient = patients.find(p => p.id === rec.patientId || p.dni === rec.patientDni);
     const message = buildMedicalRecordWhatsAppMessage(rec, config);
-    return buildWhatsAppUrl(message, patient?.phone);
+    return buildWhatsAppUrl(message, patient?.phone || rec.patientPhone);
+  };
+
+  // Generate & download official PDF and open WhatsApp with the PDF link
+  const handleSendPdfViaWhatsApp = async (rec: MedicalRecord) => {
+    const patient = patients.find(p => p.id === rec.patientId || p.dni === rec.patientDni);
+    const recordWithPhone: MedicalRecord = {
+      ...rec,
+      patientPhone: rec.patientPhone || patient?.phone || ''
+    };
+    await sendMedicalRecordPdfViaWhatsApp(recordWithPhone, config);
   };
 
   return (
@@ -325,11 +339,29 @@ export const MedicalRecordsModule: React.FC<MedicalRecordsModuleProps> = ({
         </div>
       </div>
 
-      {/* Success Toast */}
+      {/* Save Confirmation Toast Banner */}
       {savedSuccessToast && (
-        <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-semibold flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-          <span>¡Informe médico guardado con éxito en la base de datos Firestore y listo para imprimir en PDF!</span>
+        <div className="p-4 bg-[#151E3A] border-l-4 border-[#7DDACB] text-white rounded-xl text-xs font-bold flex items-center justify-between gap-3 shadow-lg animate-fadeIn">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-[#7DDACB] text-[#151E3A] flex items-center justify-center shrink-0">
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="text-[#7DDACB] block font-black uppercase tracking-wider text-[11px]">
+                Confirmación de Guardado
+              </span>
+              <span>
+                ¡El informe médico se ha guardado exitosamente en la historia clínica del paciente!
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSavedSuccessToast(false)}
+            className="text-[#F4F4F4] hover:text-white p-1 rounded-lg"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 
@@ -580,25 +612,35 @@ export const MedicalRecordsModule: React.FC<MedicalRecordsModuleProps> = ({
                             </span>
                           </div>
 
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <button
+                              type="button"
+                              onClick={() => downloadMedicalRecordPdf(rec, config)}
+                              className="px-2.5 py-1 text-xs font-bold text-[#151E3A] bg-[#F4F4F4] hover:bg-slate-200 rounded-lg border border-[#1F2952]/20 flex items-center gap-1 transition-colors cursor-pointer"
+                              title="Descargar archivo PDF oficial"
+                            >
+                              <Download className="w-3.5 h-3.5 text-[#395AFF]" />
+                              <span>Descargar PDF</span>
+                            </button>
+
                             <button
                               type="button"
                               onClick={() => setViewingRecord(rec)}
-                              className="px-2.5 py-1 text-xs font-bold text-sky-700 bg-sky-50 hover:bg-sky-100 rounded-lg border border-sky-200 flex items-center gap-1 transition-colors"
+                              className="px-2.5 py-1 text-xs font-bold text-sky-700 bg-sky-50 hover:bg-sky-100 rounded-lg border border-sky-200 flex items-center gap-1 transition-colors cursor-pointer"
                             >
                               <Printer className="w-3.5 h-3.5" />
-                              <span>Ver / Imprimir PDF</span>
+                              <span>Ver / Imprimir</span>
                             </button>
 
-                            <a
-                              href={getRecordWhatsAppUrl(rec)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="p-1 text-emerald-700 hover:bg-emerald-50 rounded-lg border border-emerald-200 transition-colors inline-flex items-center justify-center"
-                              title="Enviar resumen de informe médico al WhatsApp del paciente"
+                            <button
+                              type="button"
+                              onClick={() => handleSendPdfViaWhatsApp(rec)}
+                              className="px-2.5 py-1 text-xs font-extrabold text-[#151E3A] bg-[#7DDACB] hover:brightness-105 rounded-lg border border-[#151E3A]/15 transition-all inline-flex items-center gap-1 cursor-pointer shadow-2xs"
+                              title="Generar archivo PDF y enviarlo por WhatsApp al paciente"
                             >
-                              <Share2 className="w-3.5 h-3.5" />
-                            </a>
+                              <Share2 className="w-3.5 h-3.5 text-[#151E3A]" />
+                              <span>Enviar PDF WhatsApp</span>
+                            </button>
                           </div>
                         </div>
 
@@ -971,23 +1013,31 @@ export const MedicalRecordsModule: React.FC<MedicalRecordsModuleProps> = ({
               <div className="flex items-center gap-2">
                 <button
                   type="button"
+                  onClick={() => downloadMedicalRecordPdf(viewingRecord, config)}
+                  className="px-3 py-1.5 rounded-lg bg-[#F4F4F4] hover:bg-white text-[#151E3A] font-extrabold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5 text-[#395AFF]" />
+                  <span>Descargar PDF</span>
+                </button>
+
+                <button
+                  type="button"
                   onClick={handlePrint}
                   className="px-3.5 py-1.5 rounded-lg bg-[#395AFF] hover:brightness-110 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
                 >
                   <Printer className="w-3.5 h-3.5 text-[#7DDACB]" />
-                  <span>Imprimir en PDF</span>
+                  <span>Imprimir</span>
                 </button>
 
-                <a
-                  href={getRecordWhatsAppUrl(viewingRecord)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3 py-1.5 rounded-lg bg-[#7DDACB] hover:brightness-105 text-[#151E3A] font-extrabold text-xs flex items-center gap-1.5"
-                  title="Enviar resumen por WhatsApp al paciente"
+                <button
+                  type="button"
+                  onClick={() => handleSendPdfViaWhatsApp(viewingRecord)}
+                  className="px-3 py-1.5 rounded-lg bg-[#7DDACB] hover:brightness-105 text-[#151E3A] font-extrabold text-xs flex items-center gap-1.5 cursor-pointer"
+                  title="Enviar informe en PDF por WhatsApp al paciente"
                 >
                   <Share2 className="w-3.5 h-3.5 text-[#151E3A]" />
-                  <span>WhatsApp</span>
-                </a>
+                  <span>Enviar PDF por WhatsApp</span>
+                </button>
 
                 <button
                   type="button"
@@ -1249,6 +1299,107 @@ export const MedicalRecordsModule: React.FC<MedicalRecordsModuleProps> = ({
 
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2.5: Save Confirmation Modal after closing the creation window */}
+      {savedConfirmRecord && (
+        <div className="fixed inset-0 z-50 bg-[#151E3A]/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl border-2 border-[#7DDACB] overflow-hidden animate-fadeIn">
+            <div className="bg-[#151E3A] p-5 text-white border-b-4 border-[#7DDACB] flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#7DDACB] text-[#151E3A] flex items-center justify-center font-black shadow-md shrink-0">
+                  <CheckCircle2 className="w-6 h-6" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#7DDACB] block">
+                    Historia Médica Actualizada
+                  </span>
+                  <h3 className="text-base font-black text-white">
+                    ¡Informe Guardado con Éxito!
+                  </h3>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSavedConfirmRecord(null)}
+                className="text-[#F4F4F4] hover:text-white p-1 rounded-lg cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4 text-xs">
+              <div className="bg-[#F4F4F4] p-3.5 rounded-xl border-l-4 border-[#395AFF] space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono font-extrabold text-[#395AFF] text-sm">
+                    {savedConfirmRecord.recordNumber}
+                  </span>
+                  <span className="text-[11px] font-semibold text-[#1F2952]">
+                    {savedConfirmRecord.date} · {savedConfirmRecord.time}
+                  </span>
+                </div>
+                <p className="font-extrabold text-[#151E3A] text-sm">
+                  {savedConfirmRecord.patientName} <span className="font-mono text-xs font-normal">({savedConfirmRecord.patientDni})</span>
+                </p>
+                <p className="text-[#1F2952] font-semibold">
+                  Especialista: {savedConfirmRecord.doctorName} ({savedConfirmRecord.specialty})
+                </p>
+                <p className="text-[#151E3A] pt-1">
+                  <b>Diagnóstico:</b> {savedConfirmRecord.diagnosis}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const rec = savedConfirmRecord;
+                    setSavedConfirmRecord(null);
+                    handleSendPdfViaWhatsApp(rec);
+                  }}
+                  className="w-full py-3 px-4 rounded-xl bg-[#7DDACB] hover:brightness-105 text-[#151E3A] font-black text-xs flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
+                >
+                  <Share2 className="w-4 h-4 text-[#151E3A]" />
+                  <span>Enviar Informe en PDF por WhatsApp</span>
+                </button>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      downloadMedicalRecordPdf(savedConfirmRecord, config);
+                    }}
+                    className="py-2.5 px-3 rounded-xl bg-[#395AFF] hover:brightness-110 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                  >
+                    <Download className="w-4 h-4 text-[#7DDACB]" />
+                    <span>Descargar PDF</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const rec = savedConfirmRecord;
+                      setSavedConfirmRecord(null);
+                      setViewingRecord(rec);
+                    }}
+                    className="py-2.5 px-3 rounded-xl bg-[#F4F4F4] hover:bg-slate-200 text-[#151E3A] font-bold text-xs flex items-center justify-center gap-1.5 border border-[#1F2952]/20 transition-all cursor-pointer"
+                  >
+                    <Printer className="w-4 h-4 text-[#151E3A]" />
+                    <span>Ver Informe</span>
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSavedConfirmRecord(null)}
+                className="w-full py-2.5 rounded-xl bg-[#151E3A] hover:bg-[#1F2952] text-white font-bold text-xs transition-colors cursor-pointer"
+              >
+                Aceptar y Cerrar
+              </button>
+            </div>
           </div>
         </div>
       )}

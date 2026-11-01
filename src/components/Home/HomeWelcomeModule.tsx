@@ -38,12 +38,12 @@ import {
   CheckCircle2
 } from 'lucide-react';
 
-// Official ATP Medical generated Instagram reel assets
-import teamImg from '../../assets/images/atp_specialist_team_1792340127476.jpg';
-import consultImg from '../../assets/images/atp_medical_consultation_1792340095088.jpg';
-import wellnessImg from '../../assets/images/atp_therapy_wellness_1792340111007.jpg';
-import diagImg from '../../assets/images/atp_medical_diagnostics_1792340140952.jpg';
-import receptionImg from '../../assets/images/clinic_reception_interior_1792268353740.jpg';
+import {
+  FlyerConsultorioHogar,
+  FlyerConsultasMedicas,
+  FlyerCasheaTicket,
+  FlyerJornadaBotox
+} from './OfficialPromoFlyers';
 
 interface HomeWelcomeModuleProps {
   config: ClinicConfig;
@@ -76,57 +76,47 @@ export const HomeWelcomeModule: React.FC<HomeWelcomeModuleProps> = ({
 
   const instagramUrl = 'https://www.instagram.com/atpmedical_ve?cplk=YmI1YWRwcjVnZmlr';
 
-  // Instagram reel slides showcasing ATP Medical
+  // Official 4 Promotional Flyers for the Home Carousel
   const slides = [
     {
       id: 1,
-      image: teamImg,
-      tag: 'Equipo Especialistas',
-      title: 'Nuestro Directorio Médico en Parque Humboldt',
-      caption: 'Comprometidos con tu salud: Medicina Interna, Cardiología, Pediatría, Ginecología, Cirugía, Nutrición y Traumatología. ¡Cuidamos cada detalle de tu bienestar!',
-      hashtags: '#ATPMedical #SaludCaracas #Especialistas #ParqueHumboldt #MedicinaVenezuela',
-      likes: '482',
-      comments: '34'
+      renderFlyer: () => <FlyerConsultorioHogar />,
+      tag: 'Del Consultorio a tu Hogar',
+      title: 'Así funciona: Del Consultorio a tu Hogar',
+      caption: '1. Solicitud de Cita (seleccionamos el mejor horario para ti) · 2. Cita Médica con nuestros especialistas · 3. Diagnóstico y determinación de tratamiento · 4. Delivery de medicamentos a tu hogar u oficina.',
+      hashtags: '#ATPMedical #DelConsultorioATuHogar #DeliveryMedico #SaludCaracas #ParqueHumboldt',
+      likes: '642',
+      comments: '48'
     },
     {
       id: 2,
-      image: consultImg,
-      tag: 'Consultas Médicas',
-      title: 'Atención Médica Cercana, Empática y Precisa',
-      caption: 'Diagnósticos certeros y seguimiento clínico integral con vista panorámica a Caracas. Agenda tu consulta presencial o mediante nuestro portal de autogestión.',
-      hashtags: '#ConsultaMedica #MedicinaPreventiva #Chequeo #SaludFamiliar #Caracas',
-      likes: '391',
-      comments: '21'
+      renderFlyer: () => <FlyerConsultasMedicas />,
+      tag: 'Consultas desde $30 + Cashea',
+      title: 'Consultas Médicas: Atención Pensada en tu Comodidad',
+      caption: 'Nuevo Beneficio: Ticket de medicamentos sin costo adicional enviados a tu hogar u oficina. Más de 10 especialidades desde $30. Paga con Cashea (01–06 y 15–20 de cada mes).',
+      hashtags: '#ConsultasMedicas #Cashea #TicketDeMedicamentos #ATPMedical #ParqueHumboldt',
+      likes: '589',
+      comments: '53'
     },
     {
       id: 3,
-      image: wellnessImg,
-      tag: 'Terapia Celular ATP',
-      title: 'Revitalización Celular & Terapias de Bienestar',
-      caption: 'La energía que impulsa tu bienestar. Espacios diseñados para tu máxima serenidad, sueroterapia avanzada y revitalización celular con el majestuoso Ávila de fondo.',
-      hashtags: '#BienestarIntegral #TerapiaCelular #ATP #Vitalidad #SaludYVida',
-      likes: '627',
-      comments: '58'
+      renderFlyer: () => <FlyerCasheaTicket />,
+      tag: 'Beneficios Cashea',
+      title: 'Tus Consultas con tu Ticket de Medicamentos Ahora Están a tu Alcance',
+      caption: 'Aprovecha tus beneficios de Cashea y obtén hasta 6 cuotas e inicial baja del 01 al 06 de cada mes, e inicial baja del 15 al 20 de cada mes. Incluye consulta médica + ticket + delivery.',
+      hashtags: '#CasheaVenezuela #SaludAlAlcance #ATPMedical #CuotasSinInteres #Caracas',
+      likes: '518',
+      comments: '39'
     },
     {
       id: 4,
-      image: diagImg,
-      tag: 'Unidad de Diagnóstico',
-      title: 'Cardiología & Evaluaciones Preventivas',
-      caption: 'Equipamiento de última generación para chequeos cardiovasculares, ecosonogramas y estudios clínicos preventivos. Tu corazón en las mejores manos.',
-      hashtags: '#Cardiologia #EcoDoppler #ChequeoPreventivo #SaludCardiovascular',
-      likes: '354',
-      comments: '19'
-    },
-    {
-      id: 5,
-      image: receptionImg,
-      tag: 'Instalaciones Oficiales',
-      title: 'Visítanos en Centro Comercial Parque Humboldt',
-      caption: 'Piso 1, Oficina 5. Recepción cómoda, atención rápida y ambiente acogedor diseñado para que tu experiencia médica sea de primer nivel.',
-      hashtags: '#ClinicaCaracas #ParqueHumboldt #AtencionInmediata #ATP',
-      likes: '512',
-      comments: '42'
+      renderFlyer: () => <FlyerJornadaBotox />,
+      tag: 'Jornada Especial Estética',
+      title: 'Jornada Especial BOTOX: Para una Belleza Atemporal',
+      caption: 'Incluye Evaluación Médica, Limpieza Facial, Botox Full Face y Reevaluación. Adicional: PDRN (Esperma de salmón). Compra ahora, paga después en cuotas sin interés con Cashea. Agenda al 0414-3651970.',
+      hashtags: '#JornadaBotox #MedicinaEstetica #BellezaAtemporal #PDRN #ATPMedical_ve',
+      likes: '734',
+      comments: '67'
     }
   ];
 
@@ -287,7 +277,7 @@ export const HomeWelcomeModule: React.FC<HomeWelcomeModuleProps> = ({
               <button
                 type="button"
                 onClick={handlePrev}
-                className="w-8 h-8 rounded-lg border border-slate-300 hover:bg-slate-100 flex items-center justify-center text-slate-700 transition-colors"
+                className="w-8 h-8 rounded-lg border border-slate-300 hover:bg-slate-100 flex items-center justify-center text-slate-700 transition-colors cursor-pointer"
                 title="Imagen anterior"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -295,7 +285,7 @@ export const HomeWelcomeModule: React.FC<HomeWelcomeModuleProps> = ({
               <button
                 type="button"
                 onClick={handleNext}
-                className="w-8 h-8 rounded-lg border border-slate-300 hover:bg-slate-100 flex items-center justify-center text-slate-700 transition-colors"
+                className="w-8 h-8 rounded-lg border border-slate-300 hover:bg-slate-100 flex items-center justify-center text-slate-700 transition-colors cursor-pointer"
                 title="Siguiente imagen"
               >
                 <ChevronRight className="w-4 h-4" />
@@ -307,46 +297,23 @@ export const HomeWelcomeModule: React.FC<HomeWelcomeModuleProps> = ({
         {/* Carousel Slide Container */}
         <div className="grid grid-cols-1 lg:grid-cols-12 items-stretch">
           
-          {/* Main Visual Image (7 cols desktop) */}
-          <div className="lg:col-span-7 relative bg-slate-950 aspect-[16/10] sm:aspect-[16/9] lg:aspect-auto flex items-center justify-center overflow-hidden group">
-            {slides.map((s, idx) => (
-              <div
-                key={s.id}
-                className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
-                  idx === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
-                }`}
-              >
-                <img
-                  src={s.image}
-                  alt={s.title}
-                  className="w-full h-full object-cover object-center"
-                />
-                
-                {/* Visual subtle gradient on bottom */}
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent lg:hidden" />
-
-                <div className="absolute bottom-3 left-3 right-3 lg:hidden text-white z-20">
-                  <span className="text-[10px] font-bold uppercase tracking-wider bg-blue-600/90 px-2 py-0.5 rounded text-white">
-                    {s.tag}
-                  </span>
-                  <h3 className="text-sm font-bold text-white mt-1 drop-shadow-md">
-                    {s.title}
-                  </h3>
-                </div>
-              </div>
-            ))}
+          {/* Main Visual Promotional Flyer (7 cols desktop) */}
+          <div className="lg:col-span-7 relative bg-[#F4F4F4] min-h-[470px] flex items-stretch justify-center overflow-hidden group border-b lg:border-b-0 lg:border-r border-slate-200">
+            <div className="w-full h-full transition-all duration-500">
+              {slides[currentSlide].renderFlyer()}
+            </div>
 
             {/* Quick Carousel Floating Arrows */}
             <button
               onClick={handlePrev}
-              className="absolute left-2 z-20 w-9 h-9 rounded-full bg-black/40 hover:bg-black/70 text-white flex items-center justify-center backdrop-blur-xs transition-colors"
+              className="absolute left-2 top-1/2 -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-[#151E3A]/70 hover:bg-[#151E3A] text-white flex items-center justify-center backdrop-blur-xs transition-colors cursor-pointer shadow-md"
               aria-label="Anterior"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
             <button
               onClick={handleNext}
-              className="absolute right-2 z-20 w-9 h-9 rounded-full bg-black/40 hover:bg-black/70 text-white flex items-center justify-center backdrop-blur-xs transition-colors"
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-[#151E3A]/70 hover:bg-[#151E3A] text-white flex items-center justify-center backdrop-blur-xs transition-colors cursor-pointer shadow-md"
               aria-label="Siguiente"
             >
               <ChevronRight className="w-5 h-5" />

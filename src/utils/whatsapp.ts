@@ -89,16 +89,22 @@ export const buildAppointmentReminderMessage = (apt: Appointment, config: Clinic
 };
 
 /**
- * Standard message for sharing a medical record / clinical report summary via WhatsApp.
+ * Standard message for sharing a medical record / clinical report PDF via WhatsApp.
  */
 export const buildMedicalRecordWhatsAppMessage = (rec: MedicalRecord, config: ClinicConfig): string => {
+  const origin = typeof window !== 'undefined' ? window.location.origin.replace('://ais-dev-', '://ais-pre-') : '';
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+  const pdfUrl = `${origin}${pathname}?informe=${encodeURIComponent(rec.id)}`;
+
   return (
-    `*INFORME MÉDICO OFICIAL - ${config.clinicName}*\n` +
+    `📄 *INFORME MÉDICO EN PDF - ${config.clinicName}*\n` +
     `Sede: *${config.branchName}*\n` +
     `Folio: *${rec.recordNumber}*\n` +
     `Paciente: *${rec.patientName}* (C.I. ${rec.patientDni})\n` +
     `Fecha: *${rec.date} ${rec.time}*\n` +
     `Especialista: *${rec.doctorName}* (${rec.specialty})\n\n` +
+    `📥 *Descargar Informe Médico Oficial en PDF aquí:*\n` +
+    `👉 ${pdfUrl}\n\n` +
     `*Diagnóstico:* ${rec.diagnosis}\n\n` +
     `*Plan de Tratamiento e Indicaciones:*\n${rec.treatmentPlan || 'N/A'}\n\n` +
     (rec.prescriptions ? `*Récipe / Medicamentos:*\n${rec.prescriptions}\n\n` : '') +
@@ -106,3 +112,4 @@ export const buildMedicalRecordWhatsAppMessage = (rec: MedicalRecord, config: Cl
     `📍 _${config.address} · Contacto: ${config.phone}_`
   );
 };
+

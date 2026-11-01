@@ -250,11 +250,16 @@ export function subscribeClinicConfig(onUpdate: (config: ClinicConfig) => void):
   );
 }
 
+// Helper to recursively remove undefined fields so Firestore setDoc never fails
+function sanitizeData<T>(obj: T): T {
+  return JSON.parse(JSON.stringify(obj));
+}
+
 // Mutations
 export async function dbSaveDoctor(doctor: Doctor): Promise<void> {
   const path = `${COLLECTIONS.DOCTORS}/${doctor.id}`;
   try {
-    await setDoc(doc(db, COLLECTIONS.DOCTORS, doctor.id), doctor);
+    await setDoc(doc(db, COLLECTIONS.DOCTORS, doctor.id), sanitizeData(doctor));
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, path);
   }
@@ -278,7 +283,7 @@ export async function dbUpdateDoctorStatus(doctorId: string, status: DoctorStatu
 export async function dbSavePatient(patient: Patient): Promise<void> {
   const path = `${COLLECTIONS.PATIENTS}/${patient.id}`;
   try {
-    await setDoc(doc(db, COLLECTIONS.PATIENTS, patient.id), patient);
+    await setDoc(doc(db, COLLECTIONS.PATIENTS, patient.id), sanitizeData(patient));
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, path);
   }
@@ -296,7 +301,7 @@ export async function dbDeletePatient(patientId: string): Promise<void> {
 export async function dbSaveAppointment(appointment: Appointment): Promise<void> {
   const path = `${COLLECTIONS.APPOINTMENTS}/${appointment.id}`;
   try {
-    await setDoc(doc(db, COLLECTIONS.APPOINTMENTS, appointment.id), appointment);
+    await setDoc(doc(db, COLLECTIONS.APPOINTMENTS, appointment.id), sanitizeData(appointment));
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, path);
   }
@@ -323,7 +328,7 @@ export async function dbDeleteAppointment(appointmentId: string): Promise<void> 
 export async function dbSaveIntake(intake: PatientIntake): Promise<void> {
   const path = `${COLLECTIONS.INTAKES}/${intake.id}`;
   try {
-    await setDoc(doc(db, COLLECTIONS.INTAKES, intake.id), intake);
+    await setDoc(doc(db, COLLECTIONS.INTAKES, intake.id), sanitizeData(intake));
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, path);
   }
@@ -332,7 +337,7 @@ export async function dbSaveIntake(intake: PatientIntake): Promise<void> {
 export async function dbUpdateIntake(intake: PatientIntake): Promise<void> {
   const path = `${COLLECTIONS.INTAKES}/${intake.id}`;
   try {
-    await setDoc(doc(db, COLLECTIONS.INTAKES, intake.id), intake);
+    await setDoc(doc(db, COLLECTIONS.INTAKES, intake.id), sanitizeData(intake));
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, path);
   }
@@ -350,7 +355,7 @@ export async function dbDeleteIntake(intakeId: string): Promise<void> {
 export async function dbSaveConfig(config: ClinicConfig): Promise<void> {
   const path = `${COLLECTIONS.CONFIG}/main_config`;
   try {
-    await setDoc(doc(db, COLLECTIONS.CONFIG, 'main_config'), config);
+    await setDoc(doc(db, COLLECTIONS.CONFIG, 'main_config'), sanitizeData(config));
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, path);
   }
@@ -378,7 +383,7 @@ export function subscribeMedicalRecords(onUpdate: (records: MedicalRecord[]) => 
 export async function dbSaveMedicalRecord(record: MedicalRecord): Promise<void> {
   const path = `${COLLECTIONS.MEDICAL_RECORDS}/${record.id}`;
   try {
-    await setDoc(doc(db, COLLECTIONS.MEDICAL_RECORDS, record.id), record);
+    await setDoc(doc(db, COLLECTIONS.MEDICAL_RECORDS, record.id), sanitizeData(record));
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, path);
   }
@@ -392,4 +397,5 @@ export async function dbDeleteMedicalRecord(recordId: string): Promise<void> {
     handleFirestoreError(error, OperationType.DELETE, path);
   }
 }
+
 
