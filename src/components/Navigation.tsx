@@ -13,7 +13,8 @@ import {
   CalendarPlus,
   ShieldCheck,
   UserCog,
-  KeyRound
+  KeyRound,
+  LogOut
 } from 'lucide-react';
 import { ClinicConfig, AppUser, AppModuleId } from '../types';
 import { OfficialAtpLogo } from './OfficialLogo';
@@ -32,6 +33,7 @@ interface NavigationProps {
   users: AppUser[];
   onSelectUser: (userId: string) => void;
   onOpenUserManagement?: () => void;
+  onLogout?: () => void;
 }
 
 export const Navigation: React.FC<NavigationProps> = ({
@@ -45,7 +47,8 @@ export const Navigation: React.FC<NavigationProps> = ({
   currentUser,
   users,
   onSelectUser,
-  onOpenUserManagement
+  onOpenUserManagement,
+  onLogout
 }) => {
   const allNavItems = [
     { 
@@ -189,6 +192,18 @@ export const Navigation: React.FC<NavigationProps> = ({
                 >
                   <UserCog className="w-3.5 h-3.5 text-[#7DDACB]" />
                   <span className="hidden lg:inline">Usuarios y Claves</span>
+                </button>
+              )}
+
+              {onLogout && (
+                <button
+                  type="button"
+                  onClick={onLogout}
+                  className="ml-0.5 px-2 py-1 rounded-lg bg-[#151E3A] hover:bg-rose-600/90 border border-[#7DDACB]/30 hover:border-rose-400 text-[#F4F4F4] text-[10px] font-extrabold flex items-center gap-1 cursor-pointer transition-all"
+                  title="Cerrar sesión y volver a la ventana de acceso"
+                >
+                  <LogOut className="w-3 h-3 text-[#7DDACB]" />
+                  <span className="hidden sm:inline">Salir</span>
                 </button>
               )}
             </div>

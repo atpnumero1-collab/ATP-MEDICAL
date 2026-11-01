@@ -65,6 +65,7 @@ import { MedicalRecordsModule } from './components/MedicalRecords/MedicalRecords
 import { PatientBookingPortal } from './components/SelfService/PatientBookingPortal';
 import { HomeWelcomeModule } from './components/Home/HomeWelcomeModule';
 import { OfficialAtpLogo } from './components/OfficialLogo';
+import { LoginWindow } from './components/LoginWindow';
 import { downloadMedicalRecordPdf } from './utils/pdfGenerator';
 import { 
   PlusCircle, 
@@ -131,6 +132,7 @@ export default function App() {
   const [medicalRecords, setMedicalRecords] = useState<MedicalRecord[]>([]);
   const [users, setUsers] = useState<AppUser[]>(() => loadStoredData().users);
   const [activeUserId, setActiveUserId] = useState<string>(() => loadStoredData().activeUserId);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isUserManagementModalOpen, setIsUserManagementModalOpen] = useState(false);
 
   // Password-protected user switch modal state
@@ -621,6 +623,21 @@ export default function App() {
     );
   }
 
+  // IF STAFF USER IS NOT AUTHENTICATED YET -> SHOW LOGIN WINDOW
+  if (!isAuthenticated) {
+    return (
+      <LoginWindow
+        users={users}
+        config={config}
+        onLoginSuccess={(loggedInUser) => {
+          setActiveUserId(loggedInUser.id);
+          saveToStorage('ACTIVE_USER_ID', loggedInUser.id);
+          setIsAuthenticated(true);
+        }}
+      />
+    );
+  }
+
   const pendingIntakesCount = intakes.filter(i => i.status === 'en_espera' || i.status === 'pendiente_pago' || i.status === 'llamado').length;
 
   return (
@@ -644,6 +661,11 @@ export default function App() {
         users={users}
         onSelectUser={handleSelectUser}
         onOpenUserManagement={() => setIsUserManagementModalOpen(true)}
+        onLogout={() => {
+          setIsAuthenticated(false);
+          setPendingSwitchUserId(null);
+          setIsUserManagementModalOpen(false);
+        }}
       />
 
       {/* Main Content Viewport - Responsive across all device sizes */}
