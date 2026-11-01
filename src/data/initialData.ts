@@ -1,4 +1,4 @@
-import { Patient, Doctor, Appointment, PatientIntake, ClinicConfig } from '../types';
+import { Patient, Doctor, Appointment, PatientIntake, ClinicConfig, AppUser, AppModuleId } from '../types';
 
 export const COLOR_PRESETS = [
   {
@@ -278,3 +278,124 @@ export const TRIAGE_CONFIG = {
     description: 'Problemas crónicos estables, controles de rutina, recetas o certificados.'
   }
 };
+
+export const ALL_MODULE_OPTIONS: {
+  id: AppModuleId;
+  label: string;
+  shortLabel: string;
+  adminOnly?: boolean;
+  description: string;
+}[] = [
+  {
+    id: 'home',
+    label: 'Inicio',
+    shortLabel: 'Inicio',
+    description: 'Pantalla de bienvenida, carrete institucional y accesos rápidos.'
+  },
+  {
+    id: 'tickets',
+    label: 'Creación de Tickets',
+    shortLabel: 'Tickets',
+    description: 'Admisión inmediata, triaje y generación de turnos.'
+  },
+  {
+    id: 'waitingRoom',
+    label: 'Pacientes en Sala',
+    shortLabel: 'En Sala',
+    description: 'Monitor en vivo de pacientes en espera, pagos y llamado a consulta.'
+  },
+  {
+    id: 'appointments',
+    label: 'Citas y Agenda',
+    shortLabel: 'Citas',
+    description: 'Programación de citas médicas, agenda por especialista y confirmaciones.'
+  },
+  {
+    id: 'medicalRecords',
+    label: 'Historias Médicas',
+    shortLabel: 'Historias',
+    description: 'Expedientes clínicos, creación de informes médicos en PDF y envío interno.'
+  },
+  {
+    id: 'patients',
+    label: 'Directorio Pacientes',
+    shortLabel: 'Pacientes',
+    description: 'Padrón de pacientes registrados, cédulas, teléfonos y antecedentes.'
+  },
+  {
+    id: 'doctors',
+    label: 'Médicos & Box',
+    shortLabel: 'Médicos',
+    description: 'Directorio de médicos especialistas, horarios y disponibilidad.'
+  },
+  {
+    id: 'reports',
+    label: 'Métricas & Reportes',
+    shortLabel: 'Métricas',
+    description: 'Estadísticas de atención, volumen de citas y métricas operativas.'
+  },
+  {
+    id: 'settings',
+    label: 'Ajuste de Colores',
+    shortLabel: 'Colores',
+    adminOnly: true,
+    description: 'Exclusivo Administradores: Ajuste de colores oficiales, configuración institucional y gestión de usuarios.'
+  }
+];
+
+export const ADMIN_DEFAULT_MODULES: AppModuleId[] = [
+  'home',
+  'tickets',
+  'waitingRoom',
+  'appointments',
+  'medicalRecords',
+  'patients',
+  'doctors',
+  'reports',
+  'settings'
+];
+
+// Médico 1: Todos los módulos menos Ajuste de Colores ('settings') y Métricas y Reportes ('reports')
+export const MEDICO_DEFAULT_MODULES: AppModuleId[] = [
+  'home',
+  'tickets',
+  'waitingRoom',
+  'appointments',
+  'medicalRecords',
+  'patients',
+  'doctors'
+];
+
+export const INITIAL_USERS: AppUser[] = [
+  {
+    id: 'user-admin-ivo',
+    name: 'Ivo Hernández',
+    username: 'ivo.hernandez',
+    password: 'ivo1234',
+    role: 'admin',
+    allowedModules: [...ADMIN_DEFAULT_MODULES],
+    isSystemDefault: true,
+    createdAt: '2026-01-01T08:00:00.000Z'
+  },
+  {
+    id: 'user-admin-carlos',
+    name: 'Carlos Flores',
+    username: 'carlos.flores',
+    password: 'carlos1234',
+    role: 'admin',
+    allowedModules: [...ADMIN_DEFAULT_MODULES],
+    isSystemDefault: true,
+    createdAt: '2026-01-01T08:00:00.000Z'
+  },
+  {
+    id: 'user-medico-1',
+    name: 'Médico 1',
+    username: 'medico1',
+    password: 'medico1234',
+    role: 'medico',
+    allowedModules: [...MEDICO_DEFAULT_MODULES],
+    isSystemDefault: true,
+    createdAt: '2026-01-01T08:00:00.000Z'
+  }
+];
+

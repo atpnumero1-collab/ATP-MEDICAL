@@ -20,14 +20,16 @@ import {
   AppointmentStatus,
   IntakeStatus,
   PaymentMethod,
-  MedicalRecord
+  MedicalRecord,
+  AppUser
 } from '../types';
 import { 
   INITIAL_CONFIG, 
   INITIAL_DOCTORS, 
   INITIAL_PATIENTS, 
   INITIAL_APPOINTMENTS, 
-  INITIAL_INTAKES 
+  INITIAL_INTAKES,
+  INITIAL_USERS
 } from '../data/initialData';
 
 const COLLECTIONS = {
@@ -36,7 +38,8 @@ const COLLECTIONS = {
   APPOINTMENTS: 'appointments',
   INTAKES: 'intakes',
   CONFIG: 'config',
-  MEDICAL_RECORDS: 'medicalRecords'
+  MEDICAL_RECORDS: 'medicalRecords',
+  USERS: 'appUsers'
 };
 
 
@@ -155,7 +158,19 @@ export async function seedInitialFirestoreData(): Promise<void> {
       }
     }
 
-    // 3. Purge all test data (patients, appointments, intakes)
+    // 3. Ensure the 3 core system users (Ivo Hernández, Carlos Flores, Médico 1) exist in Firestore
+    const usersSnap = await getDocs(collection(db, COLLECTIONS.USERS));
+    const existingIds = new Set(usersSnap.docs.map(d => d.id));
+    const missingDefaultUsers = INITIAL_USERS.filter(u => !existingIds.has(u.id));
+    if (missingDefaultUsers.length > 0) {
+      const userBatch = writeBatch(db);
+      for (const u of missingDefaultUsers) {
+        userBatch.set(doc(db, COLLECTIONS.USERS, u.id), u);
+      }
+      await userBatch.commit();
+    }
+
+    // 4. Purge all test data (patients, appointments, intakes)
     await purgeTestFirestoreData();
   } catch (error) {
     console.error('Error during Firestore initial seed:', error);
@@ -393,6 +408,51 @@ export async function dbDeleteMedicalRecord(recordId: string): Promise<void> {
   const path = `${COLLECTIONS.MEDICAL_RECORDS}/${recordId}`;
   try {
     await deleteDoc(doc(db, COLLECTIONS.MEDICAL_RECORDS, recordId));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, path);
+  }
+}
+
+// App Users Subscription & Mutations
+export function subscribeUsers(onUpdate: (users: AppUser[]) => void): () => void {
+  const path = COLLECTIONS.USERS;
+  return onSnapshot(
+    collection(db, path),
+    (snapshot) => {
+      if (!snapshot.empty) {
+        const list: AppUser[] = [];
+        snapshot.forEach((d) => {
+          list.push(d.data() as AppUser);
+        });
+        for (const defUser of INITIAL_USERS) {
+          if (!list.some(u => u.id === defUser.id)) {
+            list.push(defUser);
+          }
+        }
+        onUpdate(list);
+      } else {
+        onUpdate(INITIAL_USERS);
+      }
+    },
+    (error) => {
+      handleFirestoreError(error, OperationType.GET, path);
+    }
+  );
+}
+
+export async function dbSaveUser(user: AppUser): Promise<void> {
+  const path = `${COLLECTIONS.USERS}/${user.id}`;
+  try {
+    await setDoc(doc(db, COLLECTIONS.USERS, user.id), sanitizeData(user));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+}
+
+export async function dbDeleteUser(userId: string): Promise<void> {
+  const path = `${COLLECTIONS.USERS}/${userId}`;
+  try {
+    await deleteDoc(doc(db, COLLECTIONS.USERS, userId));
   } catch (error) {
     handleFirestoreError(error, OperationType.DELETE, path);
   }

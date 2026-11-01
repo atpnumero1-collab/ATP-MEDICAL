@@ -7,5 +7,6 @@
   "messagingSenderId": "871349478273",
   "measurementId": "",
   "oAuthClientId": "871349478273-a3or0v3md4hq8bu4odcpb05gchailnnb.apps.googleusercontent.com",
-  "recaptchaSiteKey": ""
+  "recaptchaSiteKey": "",
+  "firestoreDatabaseId": "ai-studio-atpmedicalgestin-28a46342-2ed6-4153-bfff-caf2f7cb89ba"
 }

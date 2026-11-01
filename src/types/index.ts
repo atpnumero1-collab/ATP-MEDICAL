@@ -178,3 +178,28 @@ export interface MedicalRecord {
   updatedAt?: string;
 }
 
+export type AppModuleId =
+  | 'home'
+  | 'tickets'
+  | 'waitingRoom'
+  | 'appointments'
+  | 'medicalRecords'
+  | 'patients'
+  | 'doctors'
+  | 'reports'
+  | 'settings';
+
+export type UserRole = 'admin' | 'medico' | 'recepcion';
+
+export interface AppUser {
+  id: string;
+  name: string;
+  username: string;
+  password?: string;
+  role: UserRole;
+  allowedModules: AppModuleId[];
+  isSystemDefault?: boolean;
+  createdAt: string;
+}
+
+

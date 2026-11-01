@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { ClinicConfig } from '../../types';
-import { COLOR_PRESETS } from '../../data/initialData';
+import { ClinicConfig, AppUser, AppModuleId, UserRole } from '../../types';
+import { COLOR_PRESETS, ALL_MODULE_OPTIONS, ADMIN_DEFAULT_MODULES, MEDICO_DEFAULT_MODULES } from '../../data/initialData';
 import { chimePlayer } from '../../utils/audioChime';
 import { resetAllToInitial, exportFullBackup } from '../../utils/storage';
 import { OfficialAtpLogo } from '../OfficialLogo';
@@ -22,19 +22,517 @@ import {
   Sparkles,
   Phone,
   Mail,
-  MapPin
+  ShieldCheck,
+  UserPlus,
+  Users,
+  Trash2,
+  Lock,
+  KeyRound,
+  Eye,
+  EyeOff
 } from 'lucide-react';
+
+interface UserManagementPanelProps {
+  users: AppUser[];
+  currentUser: AppUser;
+  onSaveUser: (user: AppUser) => void;
+  onDeleteUser: (userId: string) => void;
+}
+
+export const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
+  users,
+  currentUser,
+  onSaveUser,
+  onDeleteUser
+}) => {
+  const [newName, setNewName] = useState('');
+  const [newUsername, setNewUsername] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [newRole, setNewRole] = useState<UserRole>('medico');
+  const [newAllowedModules, setNewAllowedModules] = useState<AppModuleId[]>([...MEDICO_DEFAULT_MODULES]);
+  const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
+  const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
+  const [editingPasswords, setEditingPasswords] = useState<Record<string, string>>({});
+
+  const handleRolePresetChange = (role: UserRole) => {
+    setNewRole(role);
+    if (role === 'admin') {
+      setNewAllowedModules([...ADMIN_DEFAULT_MODULES]);
+    } else {
+      setNewAllowedModules([...MEDICO_DEFAULT_MODULES]);
+    }
+  };
+
+  const toggleNewUserModule = (moduleId: AppModuleId) => {
+    // Ajuste de colores ('settings') is strictly reserved for admins
+    if (moduleId === 'settings' && newRole !== 'admin') return;
+    if (moduleId === 'home') return; // Home is always enabled
+
+    setNewAllowedModules(prev =>
+      prev.includes(moduleId)
+        ? prev.filter(m => m !== moduleId)
+        : [...prev, moduleId]
+    );
+  };
+
+  const handleCreateUser = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newName.trim() || !newPassword.trim()) return;
+
+    const generatedUsername =
+      newUsername.trim() ||
+      newName
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, '.');
+
+    const finalModules: AppModuleId[] =
+      newRole === 'admin'
+        ? Array.from(new Set([...newAllowedModules, 'home', 'settings']))
+        : Array.from(new Set([...newAllowedModules.filter(m => m !== 'settings'), 'home']));
+
+    const createdUser: AppUser = {
+      id: `user-${Date.now()}`,
+      name: newName.trim(),
+      username: generatedUsername,
+      password: newPassword.trim(),
+      role: newRole,
+      allowedModules: finalModules,
+      isSystemDefault: false,
+      createdAt: new Date().toISOString()
+    };
+
+    onSaveUser(createdUser);
+    setNewName('');
+    setNewUsername('');
+    setNewPassword('');
+    setNewRole('medico');
+    setNewAllowedModules([...MEDICO_DEFAULT_MODULES]);
+    setFeedbackMsg(`¡Usuario "${createdUser.name}" creado con su clave de acceso y módulos asignados!`);
+    setTimeout(() => setFeedbackMsg(null), 3500);
+  };
+
+  const handleSaveUserPassword = (targetUser: AppUser) => {
+    const draftPwd = (editingPasswords[targetUser.id] ?? targetUser.password ?? '').trim();
+    if (!draftPwd) return;
+    onSaveUser({
+      ...targetUser,
+      password: draftPwd
+    });
+    setFeedbackMsg(`¡Clave de acceso actualizada para ${targetUser.name}!`);
+    setTimeout(() => setFeedbackMsg(null), 2500);
+  };
+
+  const handleToggleExistingUserModule = (targetUser: AppUser, moduleId: AppModuleId) => {
+    if (moduleId === 'home') return; // Inicio siempre activo
+    // El módulo Ajuste de Colores solo está permitido para Administradores
+    if (moduleId === 'settings' && targetUser.role !== 'admin') return;
+
+    const hasModule = targetUser.allowedModules.includes(moduleId);
+    const updatedModules: AppModuleId[] = hasModule
+      ? targetUser.allowedModules.filter(m => m !== moduleId)
+      : [...targetUser.allowedModules, moduleId];
+
+    onSaveUser({
+      ...targetUser,
+      allowedModules: updatedModules
+    });
+    setFeedbackMsg(`Permisos de módulos actualizados para ${targetUser.name}`);
+    setTimeout(() => setFeedbackMsg(null), 2500);
+  };
+
+  const handleChangeExistingUserRole = (targetUser: AppUser, nextRole: UserRole) => {
+    const updatedModules: AppModuleId[] =
+      nextRole === 'admin'
+        ? Array.from(new Set([...targetUser.allowedModules, 'settings', 'reports']))
+        : targetUser.allowedModules.filter(m => m !== 'settings');
+
+    onSaveUser({
+      ...targetUser,
+      role: nextRole,
+      allowedModules: updatedModules
+    });
+    setFeedbackMsg(`Rol actualizado para ${targetUser.name}`);
+    setTimeout(() => setFeedbackMsg(null), 2500);
+  };
+
+  return (
+    <div className="bg-white p-5 sm:p-6 rounded-2xl border-2 border-[#7DDACB] shadow-sm space-y-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+        <div className="flex items-start sm:items-center gap-3">
+          <div className="w-11 h-11 rounded-xl bg-[#151E3A] text-[#7DDACB] border border-[#7DDACB] flex items-center justify-center shrink-0 shadow-xs">
+            <Users className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-base sm:text-lg font-black text-[#151E3A]">
+                Gestión de Usuarios, Claves y Permisos de Módulos
+              </h2>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#151E3A] text-[#7DDACB]">
+                EXCLUSIVO ADMINISTRADORES
+              </span>
+            </div>
+            <p className="text-xs text-[#1F2952]/80 mt-0.5">
+              Administradores autorizados: <b>Ivo Hernández</b> y <b>Carlos Flores</b>. Asigne claves de acceso y decida qué módulos verá cada usuario.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 bg-[#F4F4F4] px-3 py-1.5 rounded-xl border border-[#1F2952]/15 text-xs">
+          <ShieldCheck className="w-4 h-4 text-[#395AFF]" />
+          <span className="text-[#151E3A] font-bold">
+            Sesión actual: <b className="text-[#395AFF]">{currentUser.name}</b>
+          </span>
+        </div>
+      </div>
+
+      {feedbackMsg && (
+        <div className="p-3 rounded-xl bg-[#7DDACB]/25 border border-[#7DDACB] text-[#151E3A] text-xs font-bold flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-[#151E3A] shrink-0" />
+          <span>{feedbackMsg}</span>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        {/* Left 5 cols: Create New User Form */}
+        <form
+          onSubmit={handleCreateUser}
+          className="lg:col-span-5 bg-[#F4F4F4] p-4 rounded-xl border border-[#1F2952]/15 space-y-3.5 text-xs"
+        >
+          <div className="flex items-center gap-2 border-b border-slate-200 pb-2.5">
+            <UserPlus className="w-4 h-4 text-[#395AFF]" />
+            <h3 className="font-black text-[#151E3A] text-sm">Crear Nuevo Usuario con Clave</h3>
+          </div>
+
+          <div>
+            <label className="block font-bold text-[#151E3A] mb-1">
+              Nombre y Apellido / Identificador del Usuario *
+            </label>
+            <input
+              type="text"
+              required
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              placeholder="Ej: Médico 2 o Dra. María Pérez"
+              className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-[#151E3A] font-bold text-xs focus:outline-hidden focus:ring-2 focus:ring-[#395AFF]"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div>
+              <label className="block font-bold text-[#151E3A] mb-1">
+                Usuario (Opcional)
+              </label>
+              <input
+                type="text"
+                value={newUsername}
+                onChange={(e) => setNewUsername(e.target.value)}
+                placeholder="ej: medico.2"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-[#151E3A] font-mono text-xs"
+              />
+            </div>
+
+            <div>
+              <label className="block font-bold text-[#151E3A] mb-1">
+                Clave de Acceso (Contraseña) *
+              </label>
+              <div className="relative flex items-center">
+                <input
+                  type={showNewPassword ? 'text' : 'password'}
+                  required
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Ej: medico2026"
+                  className="w-full pl-3 pr-8 py-1.5 rounded-lg border border-slate-300 bg-white text-[#151E3A] font-mono font-bold text-xs focus:outline-hidden focus:ring-2 focus:ring-[#395AFF]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(v => !v)}
+                  className="absolute right-2 text-slate-400 hover:text-[#151E3A] cursor-pointer"
+                >
+                  {showNewPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="block font-bold text-[#151E3A] mb-1">
+              Rol de Acceso *
+            </label>
+            <select
+              value={newRole}
+              onChange={(e) => handleRolePresetChange(e.target.value as UserRole)}
+              className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-[#151E3A] font-bold text-xs"
+            >
+              <option value="medico">Médico (Sin Colores ni Métricas)</option>
+              <option value="recepcion">Personal / Recepción</option>
+              <option value="admin">Administrador (Acceso Total)</option>
+            </select>
+          </div>
+
+          {/* Checkboxes for deciding which modules the new user will see */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="font-bold text-[#151E3A]">
+                Módulos que verá este usuario:
+              </label>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setNewAllowedModules([...MEDICO_DEFAULT_MODULES])}
+                  className="text-[10px] font-bold px-2 py-0.5 rounded bg-white border border-slate-300 text-[#151E3A] hover:bg-slate-100 cursor-pointer"
+                >
+                  Perfil Médico
+                </button>
+                {newRole === 'admin' && (
+                  <button
+                    type="button"
+                    onClick={() => setNewAllowedModules([...ADMIN_DEFAULT_MODULES])}
+                    className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#151E3A] text-[#7DDACB] cursor-pointer"
+                  >
+                    Todos
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 bg-white p-2.5 rounded-lg border border-slate-200 max-h-56 overflow-y-auto">
+              {ALL_MODULE_OPTIONS.map(mod => {
+                const isSettingsLocked = mod.id === 'settings' && newRole !== 'admin';
+                const checked = isSettingsLocked ? false : newAllowedModules.includes(mod.id);
+
+                return (
+                  <label
+                    key={mod.id}
+                    className={`flex items-center gap-2 p-1.5 rounded-md border text-[11px] transition-colors ${
+                      isSettingsLocked
+                        ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'
+                        : checked
+                          ? 'bg-[#7DDACB]/20 border-[#7DDACB] text-[#151E3A] font-bold cursor-pointer'
+                          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 cursor-pointer'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      disabled={isSettingsLocked || mod.id === 'home'}
+                      onChange={() => toggleNewUserModule(mod.id)}
+                      className="rounded text-[#395AFF]"
+                    />
+                    <span className="truncate flex-1">{mod.label}</span>
+                    {isSettingsLocked && <Lock className="w-3 h-3 text-slate-400 shrink-0" />}
+                  </label>
+                );
+              })}
+            </div>
+            <p className="text-[10px] text-[#1F2952]/70 mt-1">
+              * El módulo «Ajuste de Colores» está reservado exclusivamente para usuarios Administradores.
+            </p>
+          </div>
+
+          <button
+            type="submit"
+            className="w-full py-2.5 px-4 rounded-xl bg-[#395AFF] hover:brightness-110 text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+          >
+            <UserPlus className="w-4 h-4 text-[#7DDACB]" />
+            <span>Crear Usuario y Guardar Clave</span>
+          </button>
+        </form>
+
+        {/* Right 7 cols: Active Users List, Password Editor & Module Checkboxes */}
+        <div className="lg:col-span-7 space-y-3 text-xs">
+          <div className="flex items-center justify-between">
+            <h3 className="font-black text-[#151E3A] text-sm">
+              Usuarios Registrados, Claves y Módulos ({users.length})
+            </h3>
+            <span className="text-[11px] text-slate-500">
+              Edite claves o active/desactive módulos por usuario
+            </span>
+          </div>
+
+          <div className="space-y-3 max-h-[480px] overflow-y-auto pr-1">
+            {users.map(u => {
+              const isProtectedAdmin = u.id === 'user-admin-ivo' || u.id === 'user-admin-carlos';
+              const isPwdVisible = Boolean(visiblePasswords[u.id]);
+              const currentDraftPwd = editingPasswords[u.id] ?? u.password ?? '';
+
+              return (
+                <div
+                  key={u.id}
+                  className="p-3.5 rounded-xl border border-slate-200 bg-white shadow-2xs space-y-2.5"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
+                    <div className="flex items-center gap-2.5">
+                      <div
+                        className={`w-8 h-8 rounded-lg font-black text-xs flex items-center justify-center ${
+                          u.role === 'admin'
+                            ? 'bg-[#151E3A] text-[#7DDACB] border border-[#7DDACB]'
+                            : 'bg-[#395AFF]/15 text-[#395AFF]'
+                        }`}
+                      >
+                        {u.name.slice(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-black text-[#151E3A] text-xs">{u.name}</span>
+                          <span
+                            className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full ${
+                              u.role === 'admin'
+                                ? 'bg-[#151E3A] text-[#7DDACB]'
+                                : 'bg-[#7DDACB]/30 text-[#151E3A]'
+                            }`}
+                          >
+                            {u.role === 'admin'
+                              ? 'Administrador'
+                              : u.role === 'medico'
+                                ? 'Médico'
+                                : 'Personal'}
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-mono text-slate-400">
+                          @{u.username} · {u.allowedModules.length} módulos activos
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {!isProtectedAdmin && (
+                        <select
+                          value={u.role}
+                          onChange={(e) => handleChangeExistingUserRole(u, e.target.value as UserRole)}
+                          className="px-2 py-1 rounded border border-slate-200 bg-slate-50 text-[11px] font-bold text-[#151E3A]"
+                        >
+                          <option value="medico">Rol: Médico</option>
+                          <option value="recepcion">Rol: Personal</option>
+                          <option value="admin">Rol: Administrador</option>
+                        </select>
+                      )}
+
+                      {!u.isSystemDefault && (
+                        <button
+                          type="button"
+                          onClick={() => onDeleteUser(u.id)}
+                          title="Eliminar usuario"
+                          className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Password Editor Row for this User */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 bg-[#F4F4F4] px-3 py-2 rounded-lg border border-slate-200/80">
+                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#151E3A]">
+                      <KeyRound className="w-3.5 h-3.5 text-[#395AFF]" />
+                      <span>Clave de acceso:</span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 flex-1 sm:flex-initial justify-end">
+                      <div className="relative flex items-center">
+                        <input
+                          type={isPwdVisible ? 'text' : 'password'}
+                          value={currentDraftPwd}
+                          onChange={(e) =>
+                            setEditingPasswords(prev => ({
+                              ...prev,
+                              [u.id]: e.target.value
+                            }))
+                          }
+                          className="w-36 sm:w-44 pl-2.5 pr-7 py-1 rounded border border-slate-300 bg-white text-[#151E3A] font-mono font-bold text-xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setVisiblePasswords(prev => ({
+                              ...prev,
+                              [u.id]: !prev[u.id]
+                            }))
+                          }
+                          className="absolute right-2 text-slate-400 hover:text-[#151E3A] cursor-pointer"
+                          title={isPwdVisible ? 'Ocultar clave' : 'Ver clave'}
+                        >
+                          {isPwdVisible ? (
+                            <EyeOff className="w-3.5 h-3.5" />
+                          ) : (
+                            <Eye className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleSaveUserPassword(u)}
+                        className="px-2.5 py-1 rounded bg-[#151E3A] hover:bg-[#395AFF] text-[#7DDACB] hover:text-white font-bold text-[11px] transition-colors cursor-pointer"
+                      >
+                        Guardar Clave
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Module checkboxes for this user */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                    {ALL_MODULE_OPTIONS.map(mod => {
+                      const isLockedForNonAdmin = mod.id === 'settings' && u.role !== 'admin';
+                      const isChecked = isLockedForNonAdmin
+                        ? false
+                        : u.allowedModules.includes(mod.id);
+
+                      return (
+                        <label
+                          key={mod.id}
+                          className={`flex items-center gap-1.5 px-2 py-1 rounded border text-[11px] select-none ${
+                            isLockedForNonAdmin
+                              ? 'bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed'
+                              : isChecked
+                                ? 'bg-[#7DDACB]/20 border-[#7DDACB] text-[#151E3A] font-bold cursor-pointer'
+                                : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50 cursor-pointer'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            disabled={isLockedForNonAdmin || mod.id === 'home' || (isProtectedAdmin && mod.id === 'settings')}
+                            onChange={() => handleToggleExistingUserModule(u, mod.id)}
+                            className="rounded text-[#395AFF]"
+                          />
+                          <span className="truncate">{mod.label}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 interface SettingsModuleProps {
   config: ClinicConfig;
   onUpdateConfig: (newConfig: ClinicConfig) => void;
   onResetData: () => void;
+  users: AppUser[];
+  currentUser: AppUser;
+  onSaveUser: (user: AppUser) => void;
+  onDeleteUser: (userId: string) => void;
 }
 
 export const SettingsModule: React.FC<SettingsModuleProps> = ({
   config,
   onUpdateConfig,
-  onResetData
+  onResetData,
+  users,
+  currentUser,
+  onSaveUser,
+  onDeleteUser
 }) => {
   const [localConfig, setLocalConfig] = useState<ClinicConfig>({ ...config });
   const [savedSuccess, setSavedSuccess] = useState(false);
@@ -92,10 +590,8 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
   };
 
   const handleReset = () => {
-    if (window.confirm('¿Está seguro de reiniciar los datos a la configuración inicial de ATP Medical? Se restablecerán citas y pacientes demo.')) {
-      resetAllToInitial();
-      onResetData();
-    }
+    resetAllToInitial();
+    onResetData();
   };
 
   return (
@@ -113,11 +609,11 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
                 Manual de Colores & Identidad MEDICAL
               </h1>
               <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#1F2952] text-[#7DDACB] font-mono">
-                PALETA OFICIAL
+                SOLO ADMINISTRADORES (IVO HERNÁNDEZ · CARLOS FLORES)
               </span>
             </div>
             <p className="text-xs text-[#1F2952]/80 mt-1">
-              Códigos cromáticos oficiales aplicados a toda la plataforma, portal de autogestión e informes médicos en PDF.
+              Módulo exclusivo de administración: Ajuste de colores corporativos, creación de usuarios y asignación de módulos visibles.
             </p>
           </div>
         </div>
@@ -129,6 +625,14 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
           </div>
         )}
       </div>
+
+      {/* User Creation & Module Visibility Management Panel for Admins */}
+      <UserManagementPanel
+        users={users}
+        currentUser={currentUser}
+        onSaveUser={onSaveUser}
+        onDeleteUser={onDeleteUser}
+      />
 
       {/* Official Logo & 5-Color Swatch Banner from PDF Documents */}
       <div className="bg-white p-4 sm:p-5 rounded-2xl border border-[#1F2952]/15 shadow-xs space-y-4">

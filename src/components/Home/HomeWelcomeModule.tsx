@@ -56,6 +56,7 @@ interface HomeWelcomeModuleProps {
   onQuickIntake: () => void;
   onQuickAppointment: () => void;
   onSharePortalLink: () => void;
+  allowedModules?: ActiveModule[];
 }
 
 export const HomeWelcomeModule: React.FC<HomeWelcomeModuleProps> = ({
@@ -68,8 +69,11 @@ export const HomeWelcomeModule: React.FC<HomeWelcomeModuleProps> = ({
   onNavigateTo,
   onQuickIntake,
   onQuickAppointment,
-  onSharePortalLink
+  onSharePortalLink,
+  allowedModules
 }) => {
+  const canViewModule = (modId: ActiveModule) =>
+    !allowedModules || allowedModules.includes(modId);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [likedPosts, setLikedPosts] = useState<Record<number, boolean>>({});
@@ -476,165 +480,179 @@ export const HomeWelcomeModule: React.FC<HomeWelcomeModuleProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           
           {/* Card 1: Creación de tickets */}
-          <div 
-            onClick={() => onNavigateTo('tickets')}
-            className="group bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-sky-300 transition-all cursor-pointer space-y-2.5 relative overflow-hidden"
-          >
-            <div className="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center font-bold group-hover:scale-110 group-hover:bg-sky-600 group-hover:text-white transition-all">
-              <PlusCircle className="w-5 h-5" />
+          {canViewModule('tickets') && (
+            <div 
+              onClick={() => onNavigateTo('tickets')}
+              className="group bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-sky-300 transition-all cursor-pointer space-y-2.5 relative overflow-hidden"
+            >
+              <div className="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center font-bold group-hover:scale-110 group-hover:bg-sky-600 group-hover:text-white transition-all">
+                <PlusCircle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-slate-900 group-hover:text-sky-600 transition-colors">
+                  Creación de Tickets
+                </h3>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  Admisión inmediata, registro de triaje de signos vitales y asignación de turno por orden de llegada.
+                </p>
+              </div>
+              <div className="flex items-center gap-1 text-xs font-bold text-sky-600 pt-1">
+                <span>Ingresar a Tickets</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
             </div>
-            <div>
-              <h3 className="font-bold text-sm text-slate-900 group-hover:text-sky-600 transition-colors">
-                Creación de Tickets
-              </h3>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                Admisión inmediata, registro de triaje de signos vitales y asignación de turno por orden de llegada.
-              </p>
-            </div>
-            <div className="flex items-center gap-1 text-xs font-bold text-sky-600 pt-1">
-              <span>Ingresar a Tickets</span>
-              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-            </div>
-          </div>
+          )}
 
           {/* Card 2: Pacientes en Sala */}
-          <div 
-            onClick={() => onNavigateTo('waitingRoom')}
-            className="group bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-rose-300 transition-all cursor-pointer space-y-2.5 relative overflow-hidden"
-          >
-            <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold group-hover:scale-110 group-hover:bg-rose-600 group-hover:text-white transition-all">
-              <HeartPulse className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center justify-between">
-                <h3 className="font-bold text-sm text-slate-900 group-hover:text-rose-600 transition-colors">
-                  Pacientes en Sala
-                </h3>
-                {pendingIntakes.length > 0 && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white animate-pulse">
-                    {pendingIntakes.length} en espera
-                  </span>
-                )}
+          {canViewModule('waitingRoom') && (
+            <div 
+              onClick={() => onNavigateTo('waitingRoom')}
+              className="group bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-rose-300 transition-all cursor-pointer space-y-2.5 relative overflow-hidden"
+            >
+              <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold group-hover:scale-110 group-hover:bg-rose-600 group-hover:text-white transition-all">
+                <HeartPulse className="w-5 h-5" />
               </div>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                Turnero en vivo, llamado a consulta, cobranza de pagos y confirmación de atención en consultorio.
-              </p>
+              <div>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-sm text-slate-900 group-hover:text-rose-600 transition-colors">
+                    Pacientes en Sala
+                  </h3>
+                  {pendingIntakes.length > 0 && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white animate-pulse">
+                      {pendingIntakes.length} en espera
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  Turnero en vivo, llamado a consulta, cobranza de pagos y confirmación de atención en consultorio.
+                </p>
+              </div>
+              <div className="flex items-center gap-1 text-xs font-bold text-rose-600 pt-1">
+                <span>Ver Monitor de Sala</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
             </div>
-            <div className="flex items-center gap-1 text-xs font-bold text-rose-600 pt-1">
-              <span>Ver Monitor de Sala</span>
-              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-            </div>
-          </div>
+          )}
 
           {/* Card 3: Citas y Agenda */}
-          <div 
-            onClick={() => onNavigateTo('appointments')}
-            className="group bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-blue-300 transition-all cursor-pointer space-y-2.5 relative overflow-hidden"
-          >
-            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all">
-              <Calendar className="w-5 h-5" />
+          {canViewModule('appointments') && (
+            <div 
+              onClick={() => onNavigateTo('appointments')}
+              className="group bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-blue-300 transition-all cursor-pointer space-y-2.5 relative overflow-hidden"
+            >
+              <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                <Calendar className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-slate-900 group-hover:text-blue-600 transition-colors">
+                  Citas y Agenda
+                </h3>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  Programación de citas, cupos por especialista, recordatorios para WhatsApp y confirmación.
+                </p>
+              </div>
+              <div className="flex items-center gap-1 text-xs font-bold text-blue-600 pt-1">
+                <span>Gestionar Agenda</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
             </div>
-            <div>
-              <h3 className="font-bold text-sm text-slate-900 group-hover:text-blue-600 transition-colors">
-                Citas y Agenda
-              </h3>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                Programación de citas, cupos por especialista, recordatorios para WhatsApp y confirmación.
-              </p>
-            </div>
-            <div className="flex items-center gap-1 text-xs font-bold text-blue-600 pt-1">
-              <span>Gestionar Agenda</span>
-              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-            </div>
-          </div>
+          )}
 
           {/* Card 4: Historias Médicas */}
-          <div 
-            onClick={() => onNavigateTo('medicalRecords')}
-            className="group bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-violet-300 transition-all cursor-pointer space-y-2.5 relative overflow-hidden"
-          >
-            <div className="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center font-bold group-hover:scale-110 group-hover:bg-violet-600 group-hover:text-white transition-all">
-              <FileText className="w-5 h-5" />
+          {canViewModule('medicalRecords') && (
+            <div 
+              onClick={() => onNavigateTo('medicalRecords')}
+              className="group bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-violet-300 transition-all cursor-pointer space-y-2.5 relative overflow-hidden"
+            >
+              <div className="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center font-bold group-hover:scale-110 group-hover:bg-violet-600 group-hover:text-white transition-all">
+                <FileText className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-slate-900 group-hover:text-violet-600 transition-colors">
+                  Historias Médicas
+                </h3>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  Expedientes clínicos, diagnósticos CIE-10, récipe y generación de informe médico con logo oficial.
+                </p>
+              </div>
+              <div className="flex items-center gap-1 text-xs font-bold text-violet-600 pt-1">
+                <span>Abrir Expedientes</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
             </div>
-            <div>
-              <h3 className="font-bold text-sm text-slate-900 group-hover:text-violet-600 transition-colors">
-                Historias Médicas
-              </h3>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                Expedientes clínicos, diagnósticos CIE-10, récipe y generación de informe médico con logo oficial.
-              </p>
-            </div>
-            <div className="flex items-center gap-1 text-xs font-bold text-violet-600 pt-1">
-              <span>Abrir Expedientes</span>
-              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-            </div>
-          </div>
+          )}
 
           {/* Card 5: Directorio Pacientes */}
-          <div 
-            onClick={() => onNavigateTo('patients')}
-            className="group bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-cyan-300 transition-all cursor-pointer space-y-2.5 relative overflow-hidden"
-          >
-            <div className="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center font-bold group-hover:scale-110 group-hover:bg-cyan-600 group-hover:text-white transition-all">
-              <Users className="w-5 h-5" />
+          {canViewModule('patients') && (
+            <div 
+              onClick={() => onNavigateTo('patients')}
+              className="group bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-cyan-300 transition-all cursor-pointer space-y-2.5 relative overflow-hidden"
+            >
+              <div className="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center font-bold group-hover:scale-110 group-hover:bg-cyan-600 group-hover:text-white transition-all">
+                <Users className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-slate-900 group-hover:text-cyan-600 transition-colors">
+                  Directorio Pacientes
+                </h3>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  Padrón general, búsqueda rápida por cédula (V/E), antecedentes y teléfono de contacto.
+                </p>
+              </div>
+              <div className="flex items-center gap-1 text-xs font-bold text-cyan-600 pt-1">
+                <span>Ver Pacientes ({patients.length})</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
             </div>
-            <div>
-              <h3 className="font-bold text-sm text-slate-900 group-hover:text-cyan-600 transition-colors">
-                Directorio Pacientes
-              </h3>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                Padrón general, búsqueda rápida por cédula (V/E), antecedentes y teléfono de contacto.
-              </p>
-            </div>
-            <div className="flex items-center gap-1 text-xs font-bold text-cyan-600 pt-1">
-              <span>Ver Pacientes ({patients.length})</span>
-              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-            </div>
-          </div>
+          )}
 
           {/* Card 6: Médicos & Box */}
-          <div 
-            onClick={() => onNavigateTo('doctors')}
-            className="group bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-emerald-300 transition-all cursor-pointer space-y-2.5 relative overflow-hidden"
-          >
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold group-hover:scale-110 group-hover:bg-emerald-600 group-hover:text-white transition-all">
-              <Stethoscope className="w-5 h-5" />
+          {canViewModule('doctors') && (
+            <div 
+              onClick={() => onNavigateTo('doctors')}
+              className="group bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-emerald-300 transition-all cursor-pointer space-y-2.5 relative overflow-hidden"
+            >
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold group-hover:scale-110 group-hover:bg-emerald-600 group-hover:text-white transition-all">
+                <Stethoscope className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-slate-900 group-hover:text-emerald-600 transition-colors">
+                  Médicos & Box
+                </h3>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  Directorio de 11 especialistas oficiales, asignación de consultorio y disponibilidad en tiempo real.
+                </p>
+              </div>
+              <div className="flex items-center gap-1 text-xs font-bold text-emerald-600 pt-1">
+                <span>Directorio ({doctors.length})</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
             </div>
-            <div>
-              <h3 className="font-bold text-sm text-slate-900 group-hover:text-emerald-600 transition-colors">
-                Médicos & Box
-              </h3>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                Directorio de 11 especialistas oficiales, asignación de consultorio y disponibilidad en tiempo real.
-              </p>
-            </div>
-            <div className="flex items-center gap-1 text-xs font-bold text-emerald-600 pt-1">
-              <span>Directorio ({doctors.length})</span>
-              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-            </div>
-          </div>
+          )}
 
-          {/* Card 7: Métricas & Reportes */}
-          <div 
-            onClick={() => onNavigateTo('reports')}
-            className="group bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-pink-300 transition-all cursor-pointer space-y-2.5 relative overflow-hidden"
-          >
-            <div className="w-10 h-10 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center font-bold group-hover:scale-110 group-hover:bg-pink-600 group-hover:text-white transition-all">
-              <BarChart3 className="w-5 h-5" />
+          {/* Card 7: Métricas & Reportes (Only if allowedModules includes 'reports') */}
+          {canViewModule('reports') && (
+            <div 
+              onClick={() => onNavigateTo('reports')}
+              className="group bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-pink-300 transition-all cursor-pointer space-y-2.5 relative overflow-hidden"
+            >
+              <div className="w-10 h-10 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center font-bold group-hover:scale-110 group-hover:bg-pink-600 group-hover:text-white transition-all">
+                <BarChart3 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-slate-900 group-hover:text-pink-600 transition-colors">
+                  Métricas & Reportes
+                </h3>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  Tiempos promedio de atención, distribución por especialidad y volumen de pacientes atendidos.
+                </p>
+              </div>
+              <div className="flex items-center gap-1 text-xs font-bold text-pink-600 pt-1">
+                <span>Ver Estadísticas</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
             </div>
-            <div>
-              <h3 className="font-bold text-sm text-slate-900 group-hover:text-pink-600 transition-colors">
-                Métricas & Reportes
-              </h3>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                Tiempos promedio de atención, distribución por especialidad y volumen de pacientes atendidos.
-              </p>
-            </div>
-            <div className="flex items-center gap-1 text-xs font-bold text-pink-600 pt-1">
-              <span>Ver Estadísticas</span>
-              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-            </div>
-          </div>
+          )}
 
           {/* Card 8: Enlace WhatsApp Pacientes */}
           <div 

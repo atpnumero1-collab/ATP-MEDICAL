@@ -1,10 +1,11 @@
-import { Patient, Doctor, Appointment, PatientIntake, ClinicConfig } from '../types';
+import { Patient, Doctor, Appointment, PatientIntake, ClinicConfig, AppUser } from '../types';
 import { 
   INITIAL_CONFIG, 
   INITIAL_DOCTORS, 
   INITIAL_PATIENTS, 
   INITIAL_APPOINTMENTS, 
-  INITIAL_INTAKES 
+  INITIAL_INTAKES,
+  INITIAL_USERS
 } from '../data/initialData';
 
 const STORAGE_KEYS = {
@@ -12,7 +13,9 @@ const STORAGE_KEYS = {
   DOCTORS: 'atp_medical_doctors_v1',
   PATIENTS: 'atp_medical_patients_v1',
   APPOINTMENTS: 'atp_medical_appointments_v1',
-  INTAKES: 'atp_medical_intakes_v1'
+  INTAKES: 'atp_medical_intakes_v1',
+  USERS: 'atp_medical_users_v1',
+  ACTIVE_USER_ID: 'atp_medical_active_user_v1'
 };
 
 export const loadStoredData = () => {
@@ -22,6 +25,8 @@ export const loadStoredData = () => {
     const patientsRaw = localStorage.getItem(STORAGE_KEYS.PATIENTS);
     const appointmentsRaw = localStorage.getItem(STORAGE_KEYS.APPOINTMENTS);
     const intakesRaw = localStorage.getItem(STORAGE_KEYS.INTAKES);
+    const usersRaw = localStorage.getItem(STORAGE_KEYS.USERS);
+    const activeUserIdRaw = localStorage.getItem(STORAGE_KEYS.ACTIVE_USER_ID);
 
     let loadedConfig = configRaw ? (JSON.parse(configRaw) as ClinicConfig) : INITIAL_CONFIG;
     // Ensure the user-provided official address, phone, colors, and slogan for Venezuela are updated
@@ -93,6 +98,25 @@ export const loadStoredData = () => {
     );
     saveToStorage('INTAKES', loadedIntakes);
 
+    let loadedUsers = usersRaw ? (JSON.parse(usersRaw) as AppUser[]) : [...INITIAL_USERS];
+    // Ensure the 3 core system users (Ivo Hernández, Carlos Flores, Médico 1) always exist and have a password
+    for (const defUser of INITIAL_USERS) {
+      const existingIdx = loadedUsers.findIndex(u => u.id === defUser.id);
+      if (existingIdx === -1) {
+        loadedUsers.push(defUser);
+      } else if (!loadedUsers[existingIdx].password) {
+        loadedUsers[existingIdx] = {
+          ...loadedUsers[existingIdx],
+          password: defUser.password
+        };
+      }
+    }
+    saveToStorage('USERS', loadedUsers);
+
+    const activeUserId =
+      activeUserIdRaw && loadedUsers.some(u => u.id === activeUserIdRaw)
+        ? activeUserIdRaw
+        : INITIAL_USERS[0].id;
 
     return {
       config: loadedConfig,
@@ -100,6 +124,8 @@ export const loadStoredData = () => {
       patients: loadedPatients,
       appointments: loadedAppointments,
       intakes: loadedIntakes,
+      users: loadedUsers,
+      activeUserId
     };
   } catch (err) {
     console.error('Error loading data from localStorage, falling back to initial data', err);
@@ -109,13 +135,19 @@ export const loadStoredData = () => {
       patients: INITIAL_PATIENTS,
       appointments: INITIAL_APPOINTMENTS,
       intakes: INITIAL_INTAKES,
+      users: INITIAL_USERS,
+      activeUserId: INITIAL_USERS[0].id
     };
   }
 };
 
 export const saveToStorage = (key: keyof typeof STORAGE_KEYS, data: unknown) => {
   try {
-    localStorage.setItem(STORAGE_KEYS[key], JSON.stringify(data));
+    if (typeof data === 'string' && key === 'ACTIVE_USER_ID') {
+      localStorage.setItem(STORAGE_KEYS[key], data);
+    } else {
+      localStorage.setItem(STORAGE_KEYS[key], JSON.stringify(data));
+    }
   } catch (err) {
     console.error(`Failed to save ${key} to localStorage`, err);
   }

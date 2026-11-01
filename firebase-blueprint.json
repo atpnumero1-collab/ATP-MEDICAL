@@ -128,6 +128,21 @@
         "activePresetId": { "type": "string" }
       },
       "required": ["clinicName", "primaryColor", "accentColor"]
+    },
+    "appUser": {
+      "title": "AppUser",
+      "description": "System user with role and allowed modules permissions",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "username": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "medico", "recepcion"] },
+        "allowedModules": { "type": "array" },
+        "isSystemDefault": { "type": "boolean" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "name", "username", "role", "allowedModules"]
     }
   },
   "firestore": {
@@ -150,6 +165,10 @@
     "/config/{configId}": {
       "schema": "clinicConfig",
       "description": "Clinic settings and colors configuration"
+    },
+    "/appUsers/{userId}": {
+      "schema": "appUser",
+      "description": "System users and role-based module permissions"
     }
   }
 }

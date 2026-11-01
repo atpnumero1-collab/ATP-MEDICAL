@@ -14,8 +14,10 @@ import {
   IntakeStatus,
   DoctorStatus,
   PaymentMethod,
-  MedicalRecord
+  MedicalRecord,
+  AppUser
 } from './types';
+import { INITIAL_USERS } from './data/initialData';
 import { 
   loadStoredData, 
   saveToStorage, 
@@ -37,6 +39,7 @@ import {
   subscribeIntakes,
   subscribeClinicConfig,
   subscribeMedicalRecords,
+  subscribeUsers,
   dbSaveAppointment,
   dbUpdateAppointmentStatus,
   dbSaveIntake,
@@ -46,7 +49,9 @@ import {
   dbUpdateDoctorStatus,
   dbSaveConfig,
   dbSaveMedicalRecord,
-  dbDeleteMedicalRecord
+  dbDeleteMedicalRecord,
+  dbSaveUser,
+  dbDeleteUser
 } from './firebase/firestoreService';
 import { Navigation, ActiveModule } from './components/Navigation';
 import { TicketCreationModule } from './components/Tickets/TicketCreationModule';
@@ -55,7 +60,7 @@ import { AppointmentsModule } from './components/Appointments/AppointmentsModule
 import { PatientsModule } from './components/Patients/PatientsModule';
 import { DoctorsModule } from './components/Doctors/DoctorsModule';
 import { ReportsModule } from './components/Reports/ReportsModule';
-import { SettingsModule } from './components/Settings/SettingsModule';
+import { SettingsModule, UserManagementPanel } from './components/Settings/SettingsModule';
 import { MedicalRecordsModule } from './components/MedicalRecords/MedicalRecordsModule';
 import { PatientBookingPortal } from './components/SelfService/PatientBookingPortal';
 import { HomeWelcomeModule } from './components/Home/HomeWelcomeModule';
@@ -78,7 +83,11 @@ import {
   Copy,
   Check,
   X,
-  ExternalLink
+  ExternalLink,
+  KeyRound,
+  Eye,
+  EyeOff,
+  Lock
 } from 'lucide-react';
 
 export default function App() {
@@ -120,6 +129,30 @@ export default function App() {
   const [appointments, setAppointments] = useState<Appointment[]>(() => loadStoredData().appointments);
   const [intakes, setIntakes] = useState<PatientIntake[]>(() => loadStoredData().intakes);
   const [medicalRecords, setMedicalRecords] = useState<MedicalRecord[]>([]);
+  const [users, setUsers] = useState<AppUser[]>(() => loadStoredData().users);
+  const [activeUserId, setActiveUserId] = useState<string>(() => loadStoredData().activeUserId);
+  const [isUserManagementModalOpen, setIsUserManagementModalOpen] = useState(false);
+
+  // Password-protected user switch modal state
+  const [pendingSwitchUserId, setPendingSwitchUserId] = useState<string | null>(null);
+  const [switchPasswordInput, setSwitchPasswordInput] = useState('');
+  const [showSwitchPassword, setShowSwitchPassword] = useState(false);
+  const [switchPasswordError, setSwitchPasswordError] = useState<string | null>(null);
+
+  const currentUser: AppUser =
+    users.find(u => u.id === activeUserId) || users[0] || INITIAL_USERS[0];
+
+  // Enforce module access when switching users or updating permissions
+  useEffect(() => {
+    const canViewCurrentModule =
+      activeModule === 'settings'
+        ? currentUser.role === 'admin' && currentUser.allowedModules.includes('settings')
+        : currentUser.allowedModules.includes(activeModule);
+
+    if (!canViewCurrentModule) {
+      setActiveModule('home');
+    }
+  }, [currentUser, activeModule]);
 
   // Cross-module preselection state
   const [preselectedPatientId, setPreselectedPatientId] = useState<string>('');
@@ -137,6 +170,7 @@ export default function App() {
     let unsubIntakes: (() => void) | undefined;
     let unsubConfig: (() => void) | undefined;
     let unsubMedicalRecords: (() => void) | undefined;
+    let unsubUsers: (() => void) | undefined;
 
     const initFirebase = async () => {
       try {
@@ -176,6 +210,25 @@ export default function App() {
         unsubMedicalRecords = subscribeMedicalRecords((liveRecords) => {
           setMedicalRecords(liveRecords || []);
         });
+
+        unsubUsers = subscribeUsers((liveUsers) => {
+          if (liveUsers && liveUsers.length > 0) {
+            const mergedUsers: AppUser[] = liveUsers.map(u => {
+              const defMatch = INITIAL_USERS.find(d => d.id === u.id);
+              return {
+                ...u,
+                password: u.password || defMatch?.password || '1234'
+              };
+            });
+            for (const sysUser of INITIAL_USERS) {
+              if (!mergedUsers.some(u => u.id === sysUser.id)) {
+                mergedUsers.push(sysUser);
+              }
+            }
+            setUsers(mergedUsers);
+            saveToStorage('USERS', mergedUsers);
+          }
+        });
       } catch (err) {
         console.warn('Realtime Firebase initialization note:', err);
       } finally {
@@ -192,6 +245,7 @@ export default function App() {
       if (unsubIntakes) unsubIntakes();
       if (unsubConfig) unsubConfig();
       if (unsubMedicalRecords) unsubMedicalRecords();
+      if (unsubUsers) unsubUsers();
     };
   }, []);
 
@@ -341,11 +395,65 @@ export default function App() {
     await dbDeleteMedicalRecord(recordId);
   };
 
+  // Handlers for Users & Permissions (Password protected)
+  const handleSelectUser = (userId: string) => {
+    setPendingSwitchUserId(userId);
+    setSwitchPasswordInput('');
+    setShowSwitchPassword(false);
+    setSwitchPasswordError(null);
+  };
+
+  const handleConfirmUserSwitch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pendingSwitchUserId) return;
+    const targetUser = users.find(u => u.id === pendingSwitchUserId);
+    if (!targetUser) return;
+
+    const defaultMatch = INITIAL_USERS.find(d => d.id === targetUser.id);
+    const expectedPassword = (targetUser.password || defaultMatch?.password || '').trim();
+
+    if (switchPasswordInput.trim() !== expectedPassword) {
+      setSwitchPasswordError('Clave de acceso incorrecta para este usuario. Verifique e intente nuevamente.');
+      return;
+    }
+
+    setActiveUserId(targetUser.id);
+    saveToStorage('ACTIVE_USER_ID', targetUser.id);
+    setPendingSwitchUserId(null);
+    setSwitchPasswordInput('');
+    setSwitchPasswordError(null);
+  };
+
+  const handleSaveUser = (user: AppUser) => {
+    setUsers(prev => {
+      const exists = prev.some(u => u.id === user.id);
+      const updated = exists
+        ? prev.map(u => (u.id === user.id ? user : u))
+        : [...prev, user];
+      saveToStorage('USERS', updated);
+      return updated;
+    });
+    dbSaveUser(user).catch(e => console.error(e));
+  };
+
+  const handleDeleteUser = (userId: string) => {
+    const target = users.find(u => u.id === userId);
+    if (!target || target.isSystemDefault) return;
+    const updated = users.filter(u => u.id !== userId);
+    setUsers(updated);
+    saveToStorage('USERS', updated);
+    if (activeUserId === userId) {
+      handleSelectUser(INITIAL_USERS[0].id);
+    }
+    dbDeleteUser(userId).catch(e => console.error(e));
+  };
+
   // Reset data - purge test data and keep official doctors
   const handleResetData = () => {
     const loaded = loadStoredData();
     setConfig(loaded.config);
     setDoctors(loaded.doctors);
+    setUsers(loaded.users);
     setPatients([]);
     setAppointments([]);
     setIntakes([]);
@@ -518,7 +626,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#F4F4F4] text-[#151E3A] flex flex-col antialiased">
       
-      {/* Navigation Top Bar - Sticky with Modules ALWAYS Visible */}
+      {/* Navigation Top Bar - Sticky with Modules Filtered by User Permissions */}
       <Navigation
         activeModule={activeModule}
         setActiveModule={setActiveModule}
@@ -532,6 +640,10 @@ export default function App() {
         }}
         onSharePortalLink={() => setIsShareModalOpen(true)}
         pendingIntakesCount={pendingIntakesCount}
+        currentUser={currentUser}
+        users={users}
+        onSelectUser={handleSelectUser}
+        onOpenUserManagement={() => setIsUserManagementModalOpen(true)}
       />
 
       {/* Main Content Viewport - Responsive across all device sizes */}
@@ -552,11 +664,12 @@ export default function App() {
               setIsNewAppointmentModalOpen(true);
             }}
             onSharePortalLink={() => setIsShareModalOpen(true)}
+            allowedModules={currentUser.allowedModules}
           />
         )}
 
         {/* Module 1: Creación de tickets */}
-        {activeModule === 'tickets' && (
+        {activeModule === 'tickets' && currentUser.allowedModules.includes('tickets') && (
           <TicketCreationModule
             patients={patients}
             doctors={doctors}
@@ -569,7 +682,7 @@ export default function App() {
         )}
 
         {/* Module 2: Pacientes en sala */}
-        {activeModule === 'waitingRoom' && (
+        {activeModule === 'waitingRoom' && currentUser.allowedModules.includes('waitingRoom') && (
           <PacientesEnSalaModule
             intakes={intakes}
             doctors={doctors}
@@ -580,7 +693,7 @@ export default function App() {
         )}
 
         {/* Module 3: Citas & Agenda */}
-        {activeModule === 'appointments' && (
+        {activeModule === 'appointments' && currentUser.allowedModules.includes('appointments') && (
           <AppointmentsModule
             appointments={appointments}
             doctors={doctors}
@@ -596,7 +709,7 @@ export default function App() {
         )}
 
         {/* Module 4: Historias Médicas */}
-        {activeModule === 'medicalRecords' && (
+        {activeModule === 'medicalRecords' && currentUser.allowedModules.includes('medicalRecords') && (
           <MedicalRecordsModule
             patients={patients}
             doctors={doctors}
@@ -610,7 +723,7 @@ export default function App() {
         )}
 
         {/* Module 5: Pacientes */}
-        {activeModule === 'patients' && (
+        {activeModule === 'patients' && currentUser.allowedModules.includes('patients') && (
           <PatientsModule
             patients={patients}
             appointments={appointments}
@@ -624,7 +737,7 @@ export default function App() {
         )}
 
         {/* Module 6: Médicos */}
-        {activeModule === 'doctors' && (
+        {activeModule === 'doctors' && currentUser.allowedModules.includes('doctors') && (
           <DoctorsModule
             doctors={doctors}
             appointments={appointments}
@@ -635,8 +748,8 @@ export default function App() {
           />
         )}
 
-        {/* Module 7: Reportes */}
-        {activeModule === 'reports' && (
+        {/* Module 7: Reportes (No visible para Médico 1 a menos que un Administrador lo habilite) */}
+        {activeModule === 'reports' && currentUser.allowedModules.includes('reports') && (
           <ReportsModule
             appointments={appointments}
             intakes={intakes}
@@ -646,15 +759,170 @@ export default function App() {
           />
         )}
 
-        {/* Module 8: Configuración */}
-        {activeModule === 'settings' && (
+        {/* Module 8: Ajuste de Colores & Configuración (Exclusivo Administradores: Ivo Hernández y Carlos Flores) */}
+        {activeModule === 'settings' && currentUser.role === 'admin' && (
           <SettingsModule
             config={config}
             onUpdateConfig={handleUpdateConfig}
             onResetData={handleResetData}
+            users={users}
+            currentUser={currentUser}
+            onSaveUser={handleSaveUser}
+            onDeleteUser={handleDeleteUser}
           />
         )}
       </main>
+
+      {/* Modal: Password Authentication when Switching Users */}
+      {pendingSwitchUserId && (() => {
+        const targetUser = users.find(u => u.id === pendingSwitchUserId) || currentUser;
+        return (
+          <div className="fixed inset-0 z-50 bg-[#151E3A]/75 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl border-2 border-[#7DDACB] overflow-hidden animate-fadeIn">
+              <div className="p-4 sm:p-5 bg-[#151E3A] border-b-2 border-[#7DDACB] text-white flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-[#7DDACB] text-[#151E3A] flex items-center justify-center font-black shrink-0">
+                    <KeyRound className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#7DDACB] block">
+                      Control de Acceso ATP Medical
+                    </span>
+                    <h3 className="font-black text-sm sm:text-base">
+                      Ingresar Clave de Usuario
+                    </h3>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPendingSwitchUserId(null);
+                    setSwitchPasswordInput('');
+                    setSwitchPasswordError(null);
+                  }}
+                  className="text-white hover:bg-white/10 p-1.5 rounded-lg transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleConfirmUserSwitch} className="p-5 space-y-4 text-xs">
+                <div>
+                  <label className="block font-bold text-[#151E3A] mb-1">
+                    Seleccione el Usuario:
+                  </label>
+                  <select
+                    value={targetUser.id}
+                    onChange={(e) => {
+                      setPendingSwitchUserId(e.target.value);
+                      setSwitchPasswordInput('');
+                      setSwitchPasswordError(null);
+                    }}
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-[#F4F4F4] text-[#151E3A] font-black text-xs focus:outline-hidden focus:ring-2 focus:ring-[#395AFF]"
+                  >
+                    {users.map(u => (
+                      <option key={u.id} value={u.id}>
+                        {u.name} — {u.role === 'admin' ? 'Administrador' : u.role === 'medico' ? 'Perfil Médico' : 'Personal'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-[#151E3A] mb-1">
+                    Clave de Acceso para <span className="text-[#395AFF]">{targetUser.name}</span> *
+                  </label>
+                  <div className="relative flex items-center">
+                    <Lock className="w-4 h-4 text-slate-400 absolute left-3" />
+                    <input
+                      type={showSwitchPassword ? 'text' : 'password'}
+                      required
+                      autoFocus
+                      value={switchPasswordInput}
+                      onChange={(e) => {
+                        setSwitchPasswordInput(e.target.value);
+                        if (switchPasswordError) setSwitchPasswordError(null);
+                      }}
+                      placeholder="Ingrese la contraseña del usuario..."
+                      className="w-full pl-9 pr-10 py-2.5 rounded-xl border border-slate-300 bg-white text-[#151E3A] font-mono font-bold text-xs focus:outline-hidden focus:ring-2 focus:ring-[#395AFF]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSwitchPassword(v => !v)}
+                      className="absolute right-3 text-slate-400 hover:text-[#151E3A] cursor-pointer"
+                    >
+                      {showSwitchPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {switchPasswordError && (
+                  <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 font-bold text-[11px]">
+                    {switchPasswordError}
+                  </div>
+                )}
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPendingSwitchUserId(null);
+                      setSwitchPasswordInput('');
+                      setSwitchPasswordError(null);
+                    }}
+                    className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-xs cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2.5 rounded-xl bg-[#395AFF] hover:brightness-110 text-white font-black text-xs flex items-center gap-1.5 shadow-md cursor-pointer"
+                  >
+                    <KeyRound className="w-4 h-4 text-[#7DDACB]" />
+                    <span>Verificar Clave e Ingresar</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Modal: User & Module Permissions Management (Exclusivo Administradores) */}
+      {isUserManagementModalOpen && currentUser.role === 'admin' && (
+        <div className="fixed inset-0 z-50 bg-[#151E3A]/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+          <div className="bg-[#F4F4F4] w-full max-w-5xl rounded-2xl shadow-2xl border-2 border-[#7DDACB] overflow-hidden my-auto">
+            <div className="p-4 sm:p-5 bg-[#151E3A] border-b-2 border-[#7DDACB] text-white flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <ShieldCheck className="w-5 h-5 text-[#7DDACB]" />
+                <div>
+                  <h3 className="font-black text-sm sm:text-base">
+                    Panel de Administradores: Usuarios y Permisos de Módulos
+                  </h3>
+                  <p className="text-[11px] text-[#7DDACB]">
+                    Sesión Administrativa Activa: {currentUser.name}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsUserManagementModalOpen(false)}
+                className="text-white hover:bg-white/10 p-1.5 rounded-lg transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 sm:p-6 max-h-[82vh] overflow-y-auto">
+              <UserManagementPanel
+                users={users}
+                currentUser={currentUser}
+                onSaveUser={handleSaveUser}
+                onDeleteUser={handleDeleteUser}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal: Share Self-Service Link Internally (WhatsApp & Correo Electrónico) */}
       {isShareModalOpen && (
@@ -967,13 +1235,17 @@ export default function App() {
 
           <div className="flex items-center gap-3 text-[#F4F4F4]/80 text-[11px] font-medium">
             <span>{config.email}</span>
-            <span className="text-[#7DDACB]">·</span>
-            <button 
-              onClick={() => setActiveModule('settings')}
-              className="text-[#7DDACB] hover:text-white font-bold hover:underline cursor-pointer"
-            >
-              Identidad & Colores Oficiales
-            </button>
+            {currentUser.role === 'admin' && (
+              <>
+                <span className="text-[#7DDACB]">·</span>
+                <button 
+                  onClick={() => setActiveModule('settings')}
+                  className="text-[#7DDACB] hover:text-white font-bold hover:underline cursor-pointer"
+                >
+                  Identidad & Colores Oficiales
+                </button>
+              </>
+            )}
           </div>
         </div>
       </footer>
