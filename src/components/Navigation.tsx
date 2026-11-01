@@ -13,6 +13,7 @@ import {
   CalendarPlus
 } from 'lucide-react';
 import { ClinicConfig } from '../types';
+import { OfficialAtpLogo } from './OfficialLogo';
 
 export type ActiveModule = 
   | 'home'
@@ -115,20 +116,16 @@ export const Navigation: React.FC<NavigationProps> = ({
     <header className="sticky top-0 z-40 bg-[#151E3A] text-white border-b border-[#1F2952] shadow-lg">
       {/* Upper Brand & Quick Actions Row (#151E3A) */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between gap-4 h-15 py-1">
+        <div className="flex items-center justify-between gap-4 h-16 py-1.5">
           
-          {/* Brand Zone with Official Siglas from siglas_atp.pdf */}
+          {/* Brand Zone with High-Resolution Vector Official Siglas */}
           <div className="flex items-center shrink-0">
             <div 
-              className="w-28 sm:w-32 h-11 rounded-xl overflow-hidden border-2 border-[#7DDACB] flex items-center justify-center shadow-md cursor-pointer hover:scale-105 transition-transform bg-[#F4F4F4] shrink-0"
+              className="w-32 sm:w-36 h-12 px-2.5 py-1 rounded-xl overflow-hidden border-2 border-[#7DDACB] flex items-center justify-center shadow-md cursor-pointer hover:brightness-105 transition-all bg-[#F4F4F4] shrink-0"
               onClick={() => setActiveModule('home')}
               title="Inicio · C.C. Parque Humboldt, Caracas"
             >
-              <img 
-                src="/assets/aistudio/siglas_atp.jpg" 
-                alt="Logo Oficial ATP" 
-                className="w-full h-full object-cover object-center scale-[1.55]"
-              />
+              <OfficialAtpLogo className="w-full h-full" />
             </div>
           </div>
 

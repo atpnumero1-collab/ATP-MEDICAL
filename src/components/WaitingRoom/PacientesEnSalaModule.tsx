@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { PatientIntake, ClinicConfig, Doctor, IntakeStatus, PaymentMethod } from '../../types';
+import { OfficialAtpLogo } from '../OfficialLogo';
 import { 
   CreditCard, 
   Clock, 
@@ -187,12 +188,8 @@ export const PacientesEnSalaModule: React.FC<PacientesEnSalaModuleProps> = ({
         {/* Centered Title Lockup with Medical Assistance Emblem */}
         <div className="text-center space-y-2 relative z-10 py-1">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-50 border border-slate-200 text-[10px] font-bold tracking-widest text-slate-600 uppercase font-mono">
-            <div className="w-12 h-4 rounded overflow-hidden border border-[#7DDACB] bg-[#F4F4F4] inline-flex items-center justify-center shrink-0">
-              <img
-                src="/assets/aistudio/siglas_atp.jpg"
-                alt="Siglas Oficiales"
-                className="w-full h-full object-cover object-center scale-[1.55]"
-              />
+            <div className="w-14 h-5 px-1 py-0.5 rounded overflow-hidden border border-[#7DDACB] bg-[#F4F4F4] inline-flex items-center justify-center shrink-0">
+              <OfficialAtpLogo className="w-full h-full" />
             </div>
             <span>MEDICAL VENEZUELA · MONITOREO CLÍNICO ASISTENCIAL</span>
             <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: config.secondaryColor }} />
@@ -818,12 +815,8 @@ export const PacientesEnSalaModule: React.FC<PacientesEnSalaModuleProps> = ({
 
             <div className="p-6 space-y-4 text-xs font-mono printable-area">
               <div className="text-center border-b-2 border-[#151E3A] pb-3">
-                <div className="w-28 h-12 mx-auto mb-2 rounded-lg overflow-hidden border-2 border-[#7DDACB] bg-[#F4F4F4] flex items-center justify-center shadow-xs">
-                  <img
-                    src="/assets/aistudio/siglas_atp.jpg"
-                    alt="Siglas Oficiales"
-                    className="w-full h-full object-cover object-center scale-[1.55]"
-                  />
+                <div className="w-32 h-13 px-2.5 py-1 mx-auto mb-2 rounded-lg overflow-hidden border-2 border-[#7DDACB] bg-[#F4F4F4] flex items-center justify-center shadow-xs">
+                  <OfficialAtpLogo className="w-full h-full" />
                 </div>
                 <h2 className="text-base font-black tracking-tight text-[#151E3A] font-sans">
                   {config.clinicName.replace(/\bATP\b/gi, '').trim() || 'MEDICAL'}

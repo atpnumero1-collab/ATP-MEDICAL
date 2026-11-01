@@ -3,6 +3,7 @@ import { ClinicConfig } from '../../types';
 import { COLOR_PRESETS } from '../../data/initialData';
 import { chimePlayer } from '../../utils/audioChime';
 import { resetAllToInitial, exportFullBackup } from '../../utils/storage';
+import { OfficialAtpLogo } from '../OfficialLogo';
 import { 
   Palette, 
   Building2, 
@@ -97,12 +98,8 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
       <div className="bg-white p-4 sm:p-5 rounded-2xl border border-[#1F2952]/15 shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
           <div className="flex items-center gap-4">
-            <div className="w-36 h-16 rounded-xl overflow-hidden border-2 border-[#7DDACB] bg-[#F4F4F4] flex items-center justify-center shadow-sm shrink-0">
-              <img
-                src="/assets/aistudio/siglas_atp.jpg"
-                alt="Siglas Oficiales"
-                className="w-full h-full object-cover object-center scale-[1.55]"
-              />
+            <div className="w-40 h-16 px-3 py-1.5 rounded-xl overflow-hidden border-2 border-[#7DDACB] bg-[#F4F4F4] flex items-center justify-center shadow-sm shrink-0">
+              <OfficialAtpLogo className="w-full h-full" />
             </div>
             <div>
               <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded bg-[#151E3A] text-[#7DDACB] inline-block mb-1">

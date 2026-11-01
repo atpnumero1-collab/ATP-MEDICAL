@@ -8,6 +8,7 @@ import {
 } from '../../types';
 import { calculateBmi } from '../../data/initialData';
 import { buildMedicalRecordWhatsAppMessage, buildWhatsAppUrl } from '../../utils/whatsapp';
+import { OfficialAtpLogo } from '../OfficialLogo';
 import { 
   FileText, 
   Search, 
@@ -1013,13 +1014,9 @@ export const MedicalRecordsModule: React.FC<MedicalRecordsModuleProps> = ({
               <div className="bg-[#151E3A] text-white p-5 rounded-xl border-b-4 border-[#7DDACB] flex items-start justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <div 
-                    className="w-32 h-14 rounded-xl overflow-hidden border-2 border-[#7DDACB] flex items-center justify-center bg-[#F4F4F4] text-[#151E3A] font-black text-xl shadow-md shrink-0"
+                    className="w-36 h-15 px-3 py-1.5 rounded-xl overflow-hidden border-2 border-[#7DDACB] flex items-center justify-center bg-[#F4F4F4] text-[#151E3A] font-black text-xl shadow-md shrink-0"
                   >
-                    <img 
-                      src="/assets/aistudio/siglas_atp.jpg" 
-                      alt="Siglas Oficiales" 
-                      className="w-full h-full object-cover object-center scale-[1.55]"
-                    />
+                    <OfficialAtpLogo className="w-full h-full" />
                   </div>
                   <div>
                     <h1 className="text-xl font-black text-white tracking-tight leading-tight">

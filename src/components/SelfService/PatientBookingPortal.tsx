@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Doctor, Appointment, Patient, ClinicConfig, AppointmentType } from '../../types';
 import { normalizeDayStr, getDayInfo } from '../Appointments/AppointmentsModule';
 import { buildWhatsAppUrl } from '../../utils/whatsapp';
+import { OfficialAtpLogo } from '../OfficialLogo';
 import { 
   Calendar, 
   Clock, 
@@ -307,13 +308,9 @@ export const PatientBookingPortal: React.FC<PatientBookingPortalProps> = ({
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div 
-              className="w-28 sm:w-32 h-11 rounded-xl overflow-hidden border-2 border-[#7DDACB] flex items-center justify-center bg-[#F4F4F4] text-[#151E3A] font-black text-lg shadow-sm shrink-0"
+              className="w-32 sm:w-36 h-12 px-2.5 py-1 rounded-xl overflow-hidden border-2 border-[#7DDACB] flex items-center justify-center bg-[#F4F4F4] text-[#151E3A] font-black text-lg shadow-sm shrink-0"
             >
-              <img 
-                src="/assets/aistudio/siglas_atp.jpg" 
-                alt="Logo Oficial ATP" 
-                className="w-full h-full object-cover object-center scale-[1.55]"
-              />
+              <OfficialAtpLogo className="w-full h-full" />
             </div>
             <span className="bg-[#7DDACB] text-[#151E3A] text-[10px] font-extrabold px-2.5 py-1 rounded-full hidden sm:inline-block">
               Autogestión en Línea
@@ -916,12 +913,8 @@ export const PatientBookingPortal: React.FC<PatientBookingPortalProps> = ({
                 style={{ backgroundColor: config.primaryColor }}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-20 h-9 rounded-lg overflow-hidden border border-[#7DDACB] bg-[#F4F4F4] flex items-center justify-center shrink-0">
-                    <img
-                      src="/assets/aistudio/siglas_atp.jpg"
-                      alt="Siglas Oficiales"
-                      className="w-full h-full object-cover object-center scale-[1.55]"
-                    />
+                  <div className="w-24 h-10 px-2 py-1 rounded-lg overflow-hidden border border-[#7DDACB] bg-[#F4F4F4] flex items-center justify-center shrink-0">
+                    <OfficialAtpLogo className="w-full h-full" />
                   </div>
                   <div>
                     <span className="text-[10px] uppercase font-bold tracking-widest text-sky-200 block">
@@ -1084,12 +1077,8 @@ export const PatientBookingPortal: React.FC<PatientBookingPortalProps> = ({
       {/* Footer */}
       <footer className="mt-auto border-t border-slate-200/80 bg-white py-4 text-xs text-slate-500 text-center">
         <div className="flex items-center justify-center gap-2 mb-1">
-          <div className="w-16 h-6 rounded overflow-hidden border border-[#7DDACB] bg-[#F4F4F4] inline-flex items-center justify-center">
-            <img
-              src="/assets/aistudio/siglas_atp.jpg"
-              alt="Siglas Oficiales"
-              className="w-full h-full object-cover object-center scale-[1.55]"
-            />
+          <div className="w-18 h-7 px-1.5 py-0.5 rounded overflow-hidden border border-[#7DDACB] bg-[#F4F4F4] inline-flex items-center justify-center">
+            <OfficialAtpLogo className="w-full h-full" />
           </div>
           <span className="font-semibold text-slate-700">
             {config.clinicName.replace(/\bATP\b/gi, '').trim() || 'MEDICAL'} · {config.slogan}

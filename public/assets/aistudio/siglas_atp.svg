@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="305 225 1315 590" width="100%" height="100%" shape-rendering="geometricPrecision">
+  <!-- Background #F4F4F4 -->
+  <rect x="305" y="225" width="1315" height="590" fill="#F4F4F4" />
+
+  <!-- 1. GLYPH 'a' (Left) -->
+  <!-- Top-Right Navy Lobe: semicircle top (cx=576, cy=546.5, r=87.5) down to y=606 -->
+  <path
+    d="M 488.5 606 L 488.5 546.5 A 87.5 87.5 0 0 1 663.5 546.5 L 663.5 606 Z"
+    fill="#132352"
+  />
+  <!-- Bottom Cyan Horizontal Lobe: semicircle left (cx=429, cy=693.5, r=87.5) to flat right x=663.5 -->
+  <path
+    d="M 663.5 606 L 429 606 A 87.5 87.5 0 0 0 429 781 L 663.5 781 Z"
+    fill="#18DACB"
+  />
+
+  <!-- 2. GLYPH 't' (Center) -->
+  <!-- Top Cyan Circle: cx=961.5, cy=345.5, r=87.5 -->
+  <circle cx="961.5" cy="345.5" r="87.5" fill="#18DACB" />
+  <!-- Left Cyan Arm: semicircle left (cx=814, cy=546.5, r=87.5) to flat right x=875 -->
+  <path
+    d="M 875 459 L 814 459 A 87.5 87.5 0 0 0 814 634 L 875 634 Z"
+    fill="#18DACB"
+  />
+  <!-- Center & Right Navy Body: vertical stem + right arm -->
+  <path
+    d="M 874 459 L 1108.5 459 A 87.5 87.5 0 0 1 1108.5 634 L 1049 634 L 1049 693.5 A 87.5 87.5 0 0 1 874 693.5 Z"
+    fill="#132352"
+  />
+
+  <!-- 3. GLYPH 'p' (Right) -->
+  <!-- Navy Body: right horizontal arm + bottom vertical stem -->
+  <path
+    d="M 1346.5 459 L 1493.5 459 A 87.5 87.5 0 0 1 1493.5 634 L 1434 634 L 1434 693.5 A 87.5 87.5 0 0 1 1259 693.5 L 1259 546.5 L 1346.5 546.5 Z"
+    fill="#132352"
+  />
+  <!-- Top-Left Cyan Circle: cx=1346.5, cy=546.5, r=87.5 -->
+  <circle cx="1346.5" cy="546.5" r="87.5" fill="#18DACB" />
+</svg>

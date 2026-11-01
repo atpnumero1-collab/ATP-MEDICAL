@@ -58,6 +58,7 @@ import { SettingsModule } from './components/Settings/SettingsModule';
 import { MedicalRecordsModule } from './components/MedicalRecords/MedicalRecordsModule';
 import { PatientBookingPortal } from './components/SelfService/PatientBookingPortal';
 import { HomeWelcomeModule } from './components/Home/HomeWelcomeModule';
+import { OfficialAtpLogo } from './components/OfficialLogo';
 import { 
   PlusCircle, 
   Calendar as CalendarIcon, 
@@ -696,12 +697,8 @@ export default function App() {
       <footer className="mt-auto border-t-2 border-[#7DDACB] bg-[#151E3A] py-5 text-xs text-[#F4F4F4]/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex flex-col sm:flex-row items-center gap-2.5 sm:gap-3 text-center sm:text-left">
-            <div className="w-20 h-9 rounded-lg overflow-hidden border border-[#7DDACB] bg-[#F4F4F4] flex items-center justify-center shrink-0 shadow-xs">
-              <img
-                src="/assets/aistudio/siglas_atp.jpg"
-                alt="Siglas Oficiales"
-                className="w-full h-full object-cover object-center scale-[1.55]"
-              />
+            <div className="w-24 h-10 px-2 py-1 rounded-lg overflow-hidden border border-[#7DDACB] bg-[#F4F4F4] flex items-center justify-center shrink-0 shadow-xs">
+              <OfficialAtpLogo className="w-full h-full" />
             </div>
             <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
               <span className="font-bold text-white">{config.clinicName.replace(/\bATP\b/gi, '').trim() || 'MEDICAL'}</span>
